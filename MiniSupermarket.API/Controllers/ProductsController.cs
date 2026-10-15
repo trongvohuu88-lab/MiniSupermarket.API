@@ -20,12 +20,13 @@ namespace MiniSupermarket.API.Controllers
 
         // GET: api/Products
         [HttpGet]
+        [Authorize(Roles = "Admin,Warehouse,Cashier")] // Cho phép Admin, Warehouse và Cashier xem danh sách
         public async Task<IActionResult> GetAll()
         {
             var products = await _context.Products
                 .Include(p => p.Category)
                 .OrderByDescending(p => p.ProductId)
-                .AsNoTracking() // Tối ưu tốc độ truy vấn đọc dữ liệu
+                .AsNoTracking()
                 .ToListAsync();
 
             return Ok(products);
@@ -33,6 +34,7 @@ namespace MiniSupermarket.API.Controllers
 
         // GET: api/Products/5
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin,Warehouse,Cashier")] // Cho phép Admin, Warehouse và Cashier xem chi tiết
         public async Task<IActionResult> GetById(int id)
         {
             var product = await _context.Products
@@ -48,6 +50,7 @@ namespace MiniSupermarket.API.Controllers
 
         // GET: api/Products/search?keyword=abc&categoryId=1
         [HttpGet("search")]
+        [Authorize(Roles = "Admin,Warehouse,Cashier")] // Giúp thu ngân quét mã vạch và tìm kiếm sản phẩm khi bán hàng POS
         public async Task<IActionResult> Search([FromQuery] string? keyword, [FromQuery] int? categoryId)
         {
             var query = _context.Products.AsQueryable();
@@ -55,7 +58,6 @@ namespace MiniSupermarket.API.Controllers
             if (!string.IsNullOrWhiteSpace(keyword))
             {
                 var key = keyword.Trim();
-                // EF Core sẽ tự biên dịch Contains(key) thành SQL LIKE '%key%' (mặc định không phân biệt hoa/thường theo Collation)
                 query = query.Where(p => p.ProductName.Contains(key) || p.Barcode.Contains(key));
             }
 
@@ -74,18 +76,16 @@ namespace MiniSupermarket.API.Controllers
 
         // POST: api/Products
         [HttpPost]
-        [Authorize(Roles = "Admin,Warehouse")]
+        [Authorize(Roles = "Admin,Warehouse")] // Chỉ Admin và Warehouse được thêm sản phẩm
         public async Task<IActionResult> Create([FromBody] Product newProduct)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            // Kiểm tra mã vạch trùng
             var existBarcode = await _context.Products.AnyAsync(p => p.Barcode == newProduct.Barcode);
             if (existBarcode)
                 return BadRequest(new { message = "Mã vạch đã tồn tại!" });
 
-            // Kiểm tra Danh mục tồn tại
             var cat = await _context.Categories.FindAsync(newProduct.CategoryId);
             if (cat == null)
                 return BadRequest(new { message = "Danh mục không tồn tại!" });
@@ -93,7 +93,6 @@ namespace MiniSupermarket.API.Controllers
             _context.Products.Add(newProduct);
             await _context.SaveChangesAsync();
 
-            // Load lại Category để trả về đủ thông tin cho Client
             await _context.Entry(newProduct).Reference(p => p.Category).LoadAsync();
 
             return CreatedAtAction(nameof(GetById), new { id = newProduct.ProductId }, newProduct);
@@ -101,7 +100,7 @@ namespace MiniSupermarket.API.Controllers
 
         // PUT: api/Products/5
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Warehouse")]
+        [Authorize(Roles = "Admin,Warehouse")] // Chỉ Admin và Warehouse được sửa sản phẩm
         public async Task<IActionResult> Update(int id, [FromBody] Product updateProduct)
         {
             if (id != updateProduct.ProductId)
@@ -111,13 +110,11 @@ namespace MiniSupermarket.API.Controllers
             if (prod == null)
                 return NotFound(new { message = "Không tìm thấy sản phẩm!" });
 
-            // Kiểm tra mã vạch trùng (trừ chính sản phẩm đang sửa)
             var existBarcode = await _context.Products
                 .AnyAsync(p => p.Barcode == updateProduct.Barcode && p.ProductId != id);
             if (existBarcode)
                 return BadRequest(new { message = "Mã vạch đã tồn tại!" });
 
-            // Kiểm tra Danh mục tồn tại
             var cat = await _context.Categories.FindAsync(updateProduct.CategoryId);
             if (cat == null)
                 return BadRequest(new { message = "Danh mục không tồn tại!" });
@@ -134,7 +131,7 @@ namespace MiniSupermarket.API.Controllers
 
         // DELETE: api/Products/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Warehouse")]
+        [Authorize(Roles = "Admin,Warehouse")] // Chỉ Admin và Warehouse được xóa sản phẩm
         public async Task<IActionResult> Delete(int id)
         {
             var prod = await _context.Products.FindAsync(id);

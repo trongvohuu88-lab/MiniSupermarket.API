@@ -10,7 +10,7 @@ namespace MiniSupermarket.WinForms
 
         public FormPOS()
         {
-            InitializeComponent(); // Gọi từ file Designer.cs để load giao diện kéo thả
+            InitializeComponent();
 
             Text = "Bán hàng POS";
             BackColor = Color.FromArgb(244, 245, 247);
@@ -20,7 +20,7 @@ namespace MiniSupermarket.WinForms
 
         private void BuildUiLogic()
         {
-            dgvCart.AutoGenerateColumns = false; // Cố định các cột tự định nghĩa
+            dgvCart.AutoGenerateColumns = false;
             dgvCart.Columns.Clear();
             dgvCart.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ProductId", HeaderText = "Mã SP", FillWeight = 15 });
             dgvCart.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ProductName", HeaderText = "Tên sản phẩm", FillWeight = 45 });
@@ -65,12 +65,12 @@ namespace MiniSupermarket.WinForms
                 }
                 else
                 {
-                    // Đã sửa product.Price thành product.UnitPrice (hoặc sửa thành product.Price nếu DTO của bạn dùng Price)
+                    // Đã sửa thành product.Price để lấy đúng giá sản phẩm từ API/DTO
                     _cart.Add(new CartItem
                     {
                         ProductId = product.ProductId,
                         ProductName = product.ProductName,
-                        UnitPrice = product.UnitPrice,
+                        UnitPrice = product.Price,
                         Quantity = 1
                     });
                 }
@@ -133,6 +133,11 @@ namespace MiniSupermarket.WinForms
         }
 
         private void FormPOS_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        private void dgvCart_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
 
         }

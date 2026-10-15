@@ -15,7 +15,7 @@ namespace MiniSupermarket.WinForms
         {
             ["pos"]      = new[] { "Admin", "Cashier" },
             ["category"] = new[] { "Admin", "Warehouse" },
-            ["product"]  = new[] { "Admin", "Warehouse" },
+            ["product"]  = new[] { "Admin", "Warehouse", "Cashier" },
             ["customer"] = new[] { "Admin", "Cashier" },
             ["reports"]  = new[] { "Admin" },
             ["user"]     = new[] { "Admin" },
