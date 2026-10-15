@@ -7,11 +7,28 @@
 namespace MiniSupermarket.API.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreateDatabase23 : Migration
+    public partial class UpdateDatabaseSchema : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.CreateTable(
+                name: "Customers",
+                columns: table => new
+                {
+                    CustomerId = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CustomerName = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
+                    PhoneNumber = table.Column<string>(type: "varchar(15)", maxLength: 15, nullable: false),
+                    Address = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
+                    RewardPoints = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
+                    MembershipRank = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false, defaultValue: "Chuẩn")
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Customers", x => x.CustomerId);
+                });
+
             migrationBuilder.CreateTable(
                 name: "Roles",
                 columns: table => new
@@ -86,32 +103,14 @@ namespace MiniSupermarket.API.Migrations
                     { 30, "Đồ lưu niệm & Quà tặng Phố Thị", "Túi vải Phố Thị, thiệp mừng, gấu bông nhỏ" }
                 });
 
-            migrationBuilder.UpdateData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 1,
-                column: "Address",
-                value: "12 Nguyễn Trãi, Q.1, TP.HCM");
-
-            migrationBuilder.UpdateData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 2,
-                column: "Address",
-                value: "45 Lê Lợi, Q.1, TP.HCM");
-
-            migrationBuilder.UpdateData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 3,
-                column: "Address",
-                value: "88 CMT8, Q.3, TP.HCM");
-
             migrationBuilder.InsertData(
                 table: "Customers",
                 columns: new[] { "CustomerId", "Address", "CustomerName", "MembershipRank", "PhoneNumber", "RewardPoints" },
                 values: new object[,]
                 {
+                    { 1, "12 Nguyễn Trãi, Q.1, TP.HCM", "Nguyễn Văn A", "Vàng", "0901122334", 150 },
+                    { 2, "45 Lê Lợi, Q.1, TP.HCM", "Trần Thị B", "Bạc", "0918877665", 50 },
+                    { 3, "88 CMT8, Q.3, TP.HCM", "Lê Văn C", "Chuẩn", "0983344556", 10 },
                     { 4, "102 Võ Văn Tần, Q.3, TP.HCM", "Phạm Hoàng Dũng", "Kim Cương", "0934567891", 520 },
                     { 5, "15 Lý Tự Trọng, Q.1, TP.HCM", "Hoàng Thị Mai", "Vàng", "0978123456", 210 }
                 });
@@ -251,11 +250,20 @@ namespace MiniSupermarket.API.Migrations
                     { 29, "893456789029", 25, 20000m, "Pin AA Panasonic Hyper Vỉ 4 Viên", 110, null },
                     { 30, "893456789030", 28, 28000m, "Cơm Cháy Chà Bông Phố Thị 150g", 90, null }
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Customers_PhoneNumber",
+                table: "Customers",
+                column: "PhoneNumber",
+                unique: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "Customers");
+
             migrationBuilder.DropTable(
                 name: "Roles");
 
@@ -282,141 +290,6 @@ namespace MiniSupermarket.API.Migrations
             migrationBuilder.DeleteData(
                 table: "Categories",
                 keyColumn: "CategoryId",
-                keyValue: 30);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 4);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 5);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 6);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 7);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 8);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 9);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 10);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 11);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 12);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 13);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 14);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 15);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 16);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 17);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 18);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 19);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 20);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 21);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 22);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 23);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 24);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 25);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 26);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 27);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 28);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 29);
-
-            migrationBuilder.DeleteData(
-                table: "Customers",
-                keyColumn: "CustomerId",
                 keyValue: 30);
 
             migrationBuilder.DeleteData(
@@ -696,27 +569,6 @@ namespace MiniSupermarket.API.Migrations
                 keyValue: 5,
                 column: "Description",
                 value: "Nước mắm, hạt nêm, dầu thực vật");
-
-            migrationBuilder.UpdateData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 1,
-                column: "Address",
-                value: null);
-
-            migrationBuilder.UpdateData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 2,
-                column: "Address",
-                value: null);
-
-            migrationBuilder.UpdateData(
-                table: "Customers",
-                keyColumn: "CustomerId",
-                keyValue: 3,
-                column: "Address",
-                value: null);
         }
     }
 }

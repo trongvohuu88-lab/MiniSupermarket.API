@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using MiniSupermarket.API.Models;
 
 namespace MiniSupermarket.API.Controllers
 {
@@ -21,16 +22,17 @@ namespace MiniSupermarket.API.Controllers
         [HttpPost("login")]
         public IActionResult Login([FromBody] LoginRequestDto request)
         {
-            // Kiểm tra tài khoản mẫu (Trong thực tế sẽ truy vấn qua EF Core / SQL Server)
-            if (request.Username == "admin" && request.Password == "123456")
+            // Tra cứu trong kho tài khoản mẫu (15 tài khoản kiểm thử Buổi 4)
+            var user = UserStore.Users.FirstOrDefault(u =>
+                u.Username == request.Username && u.Password == request.Password);
+
+            if (user != null)
             {
-                var token = GenerateJwtToken(request.Username, "Admin");
-                return Ok(new { success = true, token = token, role = "Admin" });
-            }
-            else if (request.Username == "cashier" && request.Password == "123456")
-            {
-                var token = GenerateJwtToken(request.Username, "Cashier");
-                return Ok(new { success = true, token = token, role = "Cashier" });
+                if (!user.IsActive)
+                    return Unauthorized(new { success = false, message = "Tài khoản đã bị khóa!" });
+
+                var token = GenerateJwtToken(user.Username, user.Role);
+                return Ok(new { success = true, token, role = user.Role, fullName = user.FullName });
             }
 
             return Unauthorized(new { success = false, message = "Sai tài khoản hoặc mật khẩu!" });

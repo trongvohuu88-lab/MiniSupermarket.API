@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiniSupermarket.API.Data;
@@ -83,7 +83,7 @@ namespace MiniSupermarket.API.Controllers
 
         // 5. PUT /api/customers/{id} - Cập nhật thông tin (Chỉ Admin)
         [HttpPut("{id:int}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Cashier")]
         public async Task<IActionResult> PutCustomer(int id, Customer customer)
         {
             if (id != customer.CustomerId)
@@ -112,7 +112,7 @@ namespace MiniSupermarket.API.Controllers
 
         // 6. DELETE /api/customers/{id} - Xóa khách hàng (Chỉ Admin)
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Cashier")]
         public async Task<IActionResult> DeleteCustomer(int id)
         {
             var customer = await _context.Customers.FindAsync(id);

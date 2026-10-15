@@ -11,8 +11,8 @@ using MiniSupermarket.API.Data;
 namespace MiniSupermarket.API.Migrations
 {
     [DbContext(typeof(SupermarketDbContext))]
-    [Migration("20261008122316_InitialCreateDatabase23")]
-    partial class InitialCreateDatabase23
+    [Migration("20261015101235_UpdateDatabaseSchema")]
+    partial class UpdateDatabaseSchema
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

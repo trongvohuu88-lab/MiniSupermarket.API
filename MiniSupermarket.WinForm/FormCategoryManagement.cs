@@ -9,6 +9,9 @@ namespace MiniSupermarket.WinForms
         public FormCategoryManagement()
         {
             InitializeComponent();
+            grpSearch.Anchor = AnchorStyles.Top | AnchorStyles.Left | AnchorStyles.Right;
+            grpList.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
+            grpInfo.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Right;
         }
 
         private HttpClient GetAuthenticatedClient()

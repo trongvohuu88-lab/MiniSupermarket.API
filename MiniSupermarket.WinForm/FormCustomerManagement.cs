@@ -1,4 +1,5 @@
 ﻿using Stripe;
+using MiniSupermarket.WinForms;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -7,11 +8,17 @@ namespace MiniSupermarket.Client
     public partial class FormCustomerManagement : Form
     {
         private const string BaseUrl = "https://localhost:7292/api/customers";
-        private static readonly HttpClient _http = new HttpClient();
+        private static HttpClient _http => ApiClientService.Client; // có gắn Bearer Token
 
         public FormCustomerManagement()
         {
             InitializeComponent();
+            // Form được nhúng vào panel lớn hơn kích thước thiết kế: neo vùng nhập liệu xuống đáy
+            // để bảng dgvCustomers dãn ra mà không đè lên các ô nhập.
+            foreach (Control c in Controls)
+                if (c != dgvCustomers && c.Top > 300)
+                    c.Anchor = AnchorStyles.Bottom | AnchorStyles.Left;
+            dgvCustomers.Anchor = AnchorStyles.Top | AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Right;
         }
 
         // ===== Sự kiện khi mở form =====

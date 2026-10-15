@@ -82,51 +82,33 @@
             // 
             // btnUserManage
             // 
-            btnUserManage.Location = new Point(0, 0);
-            btnUserManage.Name = "btnUserManage";
-            btnUserManage.Size = new Size(75, 23);
-            btnUserManage.TabIndex = 1;
-            btnUserManage.Click += btnNav_Click;
+            ConfigureNavButton(btnUserManage, "btnUserManage", "👥  Tài khoản");
+            btnUserManage.Click += btnUserManage_Click;
             // 
             // btnReports
             // 
-            btnReports.Location = new Point(0, 0);
-            btnReports.Name = "btnReports";
-            btnReports.Size = new Size(75, 23);
-            btnReports.TabIndex = 2;
-            btnReports.Click += btnNav_Click;
+            ConfigureNavButton(btnReports, "btnReports", "📊  Báo cáo");
+            btnReports.Click += btnReports_Click;
             // 
             // btnCustomer
             // 
-            btnCustomer.Location = new Point(0, 0);
-            btnCustomer.Name = "btnCustomer";
-            btnCustomer.Size = new Size(75, 23);
-            btnCustomer.TabIndex = 3;
-            btnCustomer.Click += btnNav_Click;
+            ConfigureNavButton(btnCustomer, "btnCustomer", "🤝  Khách hàng");
+            btnCustomer.Click += btnCustomer_Click;
             // 
             // btnProduct
             // 
-            btnProduct.Location = new Point(0, 0);
-            btnProduct.Name = "btnProduct";
-            btnProduct.Size = new Size(75, 23);
-            btnProduct.TabIndex = 4;
-            btnProduct.Click += btnNav_Click;
+            ConfigureNavButton(btnProduct, "btnProduct", "📦  Sản phẩm");
+            btnProduct.Click += btnProduct_Click;
             // 
             // btnCategory
             // 
-            btnCategory.Location = new Point(0, 0);
-            btnCategory.Name = "btnCategory";
-            btnCategory.Size = new Size(75, 23);
-            btnCategory.TabIndex = 5;
-            btnCategory.Click += btnNav_Click;
+            ConfigureNavButton(btnCategory, "btnCategory", "📑  Danh mục");
+            btnCategory.Click += btnCategory_Click;
             // 
             // btnPOS
             // 
-            btnPOS.Location = new Point(0, 0);
-            btnPOS.Name = "btnPOS";
-            btnPOS.Size = new Size(75, 23);
-            btnPOS.TabIndex = 6;
-            btnPOS.Click += btnNav_Click;
+            ConfigureNavButton(btnPOS, "btnPOS", "🛒  Bán hàng POS");
+            btnPOS.Click += btnPOS_Click;
             // 
             // lblLogo
             // 
@@ -137,7 +119,7 @@
             lblLogo.Name = "lblLogo";
             lblLogo.Size = new Size(230, 70);
             lblLogo.TabIndex = 7;
-            lblLogo.Text = "\U0001f6d2 MiniMart POS";
+            lblLogo.Text = "🛍️ MiniMart POS";
             lblLogo.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // panelTopHeader
@@ -156,7 +138,7 @@
             lblUserInfo.Anchor = AnchorStyles.Top | AnchorStyles.Right;
             lblUserInfo.AutoSize = true;
             lblUserInfo.Font = new Font("Segoe UI", 10F);
-            lblUserInfo.Location = new Point(1690, 20);
+            lblUserInfo.Location = new Point(800, 20);
             lblUserInfo.Name = "lblUserInfo";
             lblUserInfo.Size = new Size(77, 19);
             lblUserInfo.TabIndex = 0;
@@ -202,7 +184,7 @@
             ResumeLayout(false);
         }
 
-        // Cấu hình chung cho các nút điều hướng trong sidebar
+        // Hàm helper tối ưu để cấu hình các nút trên sidebar gọn gàng
         private static void ConfigureNavButton(Button btn, string name, string text)
         {
             btn.BackColor = Color.FromArgb(24, 30, 48);

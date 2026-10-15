@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiniSupermarket.API.Data;
@@ -55,7 +55,7 @@ namespace MiniSupermarket.API.Controllers
 
         // 4. CREATE: Thêm mới nhóm hàng (Chỉ Admin)
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> Create([FromBody] Category newCat)
         {
             if (!ModelState.IsValid)
@@ -71,7 +71,7 @@ namespace MiniSupermarket.API.Controllers
 
         // 5. UPDATE: Cập nhật nhóm hàng (Chỉ Admin)
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> Update(int id, [FromBody] Category updateCat)
         {
             var cat = await _context.Categories.FindAsync(id);
@@ -89,7 +89,7 @@ namespace MiniSupermarket.API.Controllers
 
         // 6. DELETE: Xóa nhóm hàng (Chỉ Admin)
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> Delete(int id)
         {
             var cat = await _context.Categories.FindAsync(id);

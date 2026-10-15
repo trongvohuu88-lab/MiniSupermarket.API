@@ -1,21 +1,24 @@
-﻿using MiniSupermarket.WinForms;
+using MiniSupermarket.WinForms;
 
 namespace MiniSupermarket.WinForm
 {
     internal static class Program
     {
-        /// <summary>
-        ///  The main entry point for the application.
-        /// </summary>
         [STAThread]
         static void Main()
         {
-            // To customize application configuration such as set high DPI settings or default font,
-            // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
-            //Application.Run(new FormCategoryManagement());
-            //Application.Run(new FormRoleManagement());
-            Application.Run(new FormLogin());
+
+            // Vòng lặp: Đăng nhập -> Shell. Bấm Đăng xuất thì quay lại Đăng nhập.
+            do
+            {
+                SessionManager.LogoutRequested = false;
+                using (var login = new FormLogin())
+                {
+                    if (login.ShowDialog() != DialogResult.OK) return;
+                }
+                Application.Run(new FormMainShell());
+            } while (SessionManager.LogoutRequested);
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiniSupermarket.API.Data;
@@ -74,7 +74,7 @@ namespace MiniSupermarket.API.Controllers
 
         // POST: api/Products
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> Create([FromBody] Product newProduct)
         {
             if (!ModelState.IsValid)
@@ -101,7 +101,7 @@ namespace MiniSupermarket.API.Controllers
 
         // PUT: api/Products/5
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> Update(int id, [FromBody] Product updateProduct)
         {
             if (id != updateProduct.ProductId)
@@ -134,7 +134,7 @@ namespace MiniSupermarket.API.Controllers
 
         // DELETE: api/Products/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Warehouse")]
         public async Task<IActionResult> Delete(int id)
         {
             var prod = await _context.Products.FindAsync(id);

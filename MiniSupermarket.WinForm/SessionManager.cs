@@ -10,7 +10,14 @@ namespace MiniSupermarket.WinForms
         public static string Token { get; set; } = string.Empty;
         public static string CurrentUsername { get; set; } = string.Empty;
         public static string CurrentRole { get; set; } = string.Empty;
-        public static string? JwtToken { get; internal set; }
+        public static string FullName { get; set; } = string.Empty;
+        // Giữ tương thích với code cũ dùng JwtToken: luôn trỏ về Token
+        public static string? JwtToken { get => Token; set => Token = value ?? string.Empty; }
+        // Đặt true khi người dùng bấm Đăng xuất để Program mở lại màn hình đăng nhập
+        public static bool LogoutRequested { get; set; }
+
+        public static bool IsInRole(params string[] roles) =>
+            roles.Any(r => string.Equals(r, CurrentRole, StringComparison.OrdinalIgnoreCase));
 
         // Phương thức xóa thông tin phiên khi đăng xuất
         public static void Clear()
@@ -18,6 +25,7 @@ namespace MiniSupermarket.WinForms
             Token = string.Empty;
             CurrentUsername = string.Empty;
             CurrentRole = string.Empty;
+            FullName = string.Empty;
         }
     }
 
@@ -29,6 +37,18 @@ namespace MiniSupermarket.WinForms
         {
             BaseAddress = new Uri("https://localhost:7292/api/")
         };
+
+        // HttpClient dùng chung cho mọi form; luôn gắn Bearer Token mới nhất
+        public static HttpClient Client
+        {
+            get
+            {
+                _client.DefaultRequestHeaders.Authorization = string.IsNullOrEmpty(SessionManager.Token)
+                    ? null
+                    : new AuthenticationHeaderValue("Bearer", SessionManager.Token);
+                return _client;
+            }
+        }
 
         // Hàm gọi API đăng nhập lấy Token và lưu vào SessionManager
         public static async Task<bool> LoginAsync(string username, string password)
@@ -45,6 +65,7 @@ namespace MiniSupermarket.WinForms
                 SessionManager.Token = doc.RootElement.GetProperty("token").GetString() ?? string.Empty;
                 SessionManager.CurrentRole = doc.RootElement.GetProperty("role").GetString() ?? string.Empty;
                 SessionManager.CurrentUsername = username;
+                SessionManager.FullName = doc.RootElement.TryGetProperty("fullName", out var fn) ? fn.GetString() ?? string.Empty : string.Empty;
 
                 return true;
             }
