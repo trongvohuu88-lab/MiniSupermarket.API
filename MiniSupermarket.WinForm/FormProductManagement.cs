@@ -6,6 +6,7 @@ namespace MiniSupermarket.WinForms
     public partial class FormProductManagement : Form
     {
         private List<ProductDto> _products = new();
+        private bool _isInitialized = false; // Cờ kiểm tra form đã load xong chưa
 
         public FormProductManagement()
         {
@@ -13,16 +14,27 @@ namespace MiniSupermarket.WinForms
 
             BackColor = Color.FromArgb(244, 245, 247);
 
-            // Đăng ký các sự kiện tương tác
+            // Đăng ký các sự kiện tương tác cơ bản
             btnSearch.Click += async (_, _) => await LoadProductsAsync();
             txtSearch.KeyDown += async (_, e) => { if (e.KeyCode == Keys.Enter) await LoadProductsAsync(); };
             btnNew.Click += (_, _) => ClearInputs();
             btnAdd.Click += async (_, _) => await SaveAsync(isNew: true);
             btnUpdate.Click += async (_, _) => await SaveAsync(isNew: false);
             btnDelete.Click += async (_, _) => await DeleteAsync();
-            dgv.SelectionChanged += (_, _) => FillFromSelection();
 
-            Load += async (_, _) => { await LoadCategoriesAsync(); await LoadProductsAsync(); };
+            // Sự kiện chọn dòng trên bảng
+            dgv.SelectionChanged += (_, _) =>
+            {
+                if (_isInitialized) FillFromSelection();
+            };
+
+            // Sự kiện Load form
+            Load += async (_, _) =>
+            {
+                await LoadCategoriesAsync();
+                await LoadProductsAsync();
+                _isInitialized = true; // Đánh dấu form đã sẵn sàng
+            };
         }
 
         private async Task LoadCategoriesAsync()
@@ -78,13 +90,26 @@ namespace MiniSupermarket.WinForms
 
         private void FillFromSelection()
         {
-            if (dgv.CurrentRow == null) return;
-            int id = Convert.ToInt32(dgv.CurrentRow.Cells["ProductId"].Value);
+            if (dgv == null || dgv.CurrentRow == null || _products == null || _products.Count == 0) return;
+
+            var cellValue = dgv.CurrentRow.Cells["ProductId"]?.Value;
+            if (cellValue == null || cellValue == DBNull.Value) return;
+
+            int id = Convert.ToInt32(cellValue);
             var p = _products.FirstOrDefault(x => x.ProductId == id);
             if (p == null) return;
-            txtId.Text = p.ProductId.ToString(); txtBarcode.Text = p.Barcode; txtName.Text = p.ProductName;
-            nudPrice.Value = p.Price; nudStock.Value = p.StockQuantity; txtUnit.Text = p.Unit ?? "";
-            cboCategory.SelectedValue = p.CategoryId;
+
+            txtId.Text = p.ProductId.ToString();
+            txtBarcode.Text = p.Barcode ?? "";
+            txtName.Text = p.ProductName ?? "";
+            nudPrice.Value = p.Price;
+            nudStock.Value = p.StockQuantity;
+            txtUnit.Text = p.Unit ?? "";
+
+            if (cboCategory.DataSource != null)
+            {
+                cboCategory.SelectedValue = p.CategoryId;
+            }
         }
 
         private async Task SaveAsync(bool isNew)
@@ -149,5 +174,6 @@ namespace MiniSupermarket.WinForms
         public string? Unit { get; set; }
         public int CategoryId { get; set; }
         public CategoryDto? Category { get; set; }
+        public decimal UnitPrice { get; internal set; }
     }
 }

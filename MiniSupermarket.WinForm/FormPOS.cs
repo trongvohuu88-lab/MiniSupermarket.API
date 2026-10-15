@@ -20,6 +20,8 @@ namespace MiniSupermarket.WinForms
 
         private void BuildUiLogic()
         {
+            dgvCart.AutoGenerateColumns = false; // Cố định các cột tự định nghĩa
+            dgvCart.Columns.Clear();
             dgvCart.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ProductId", HeaderText = "Mã SP", FillWeight = 15 });
             dgvCart.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "ProductName", HeaderText = "Tên sản phẩm", FillWeight = 45 });
             dgvCart.Columns.Add(new DataGridViewTextBoxColumn { DataPropertyName = "UnitPrice", HeaderText = "Đơn giá", FillWeight = 15, DefaultCellStyle = { Format = "N0" } });
@@ -56,8 +58,22 @@ namespace MiniSupermarket.WinForms
                 }
 
                 var item = _cart.FirstOrDefault(c => c.ProductId == product.ProductId);
-                if (item != null) { item.Quantity++; _cart.ResetBindings(); }
-                else _cart.Add(new CartItem { ProductId = product.ProductId, ProductName = product.ProductName, UnitPrice = product.Price, Quantity = 1 });
+                if (item != null)
+                {
+                    item.Quantity++;
+                    _cart.ResetBindings();
+                }
+                else
+                {
+                    // Đã sửa product.Price thành product.UnitPrice (hoặc sửa thành product.Price nếu DTO của bạn dùng Price)
+                    _cart.Add(new CartItem
+                    {
+                        ProductId = product.ProductId,
+                        ProductName = product.ProductName,
+                        UnitPrice = product.UnitPrice,
+                        Quantity = 1
+                    });
+                }
                 UpdateTotals();
             }
             catch (Exception ex) { MessageBox.Show("Lỗi kết nối máy chủ: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error); }
