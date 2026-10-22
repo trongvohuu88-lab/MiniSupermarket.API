@@ -17,205 +17,348 @@
 
         private void InitializeComponent()
         {
-            txtSearch = new TextBox();
-            cboFilter = new ComboBox();
-            btnSearch = new Button();
-            dgv = new DataGridView();
-            panelRight = new TableLayoutPanel();
-            panelButtons = new FlowLayoutPanel();
-
-            // Khởi tạo các nút bấm chức năng
-            btnNew = MakeBtn("Làm mới", Color.Gray);
-            btnAdd = MakeBtn("Thêm", Color.SeaGreen);
-            btnUpdate = MakeBtn("Sửa", Color.RoyalBlue);
-            btnDelete = MakeBtn("Xóa", Color.Firebrick);
-
-            lblId = new Label();
-            txtId = new TextBox();
-            lblBarcode = new Label();
-            txtBarcode = new TextBox();
-            lblName = new Label();
-            txtName = new TextBox();
-            lblPrice = new Label();
-            nudPrice = new NumericUpDown();
-            lblStock = new Label();
+            panelInputs = new Panel();
+            btnDelete = new Button();
+            btnUpdate = new Button();
+            btnCreate = new Button();
             nudStock = new NumericUpDown();
-            lblUnit = new Label();
-            txtUnit = new TextBox();
-            lblCategory = new Label();
+            lblStock = new Label();
+            nudPrice = new NumericUpDown();
+            lblPrice = new Label();
             cboCategory = new ComboBox();
-            topPanel = new FlowLayoutPanel();
+            lblCategory = new Label();
+            txtName = new TextBox();
+            lblName = new Label();
+            txtBarcode = new TextBox();
+            lblBarcode = new Label();
+            txtId = new TextBox();
+            lblId = new Label();
 
-            ((System.ComponentModel.ISupportInitialize)dgv).BeginInit();
-            panelRight.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)nudPrice).BeginInit();
+            panelSearch = new Panel();
+            btnSearch = new Button();
+            txtSearch = new TextBox();
+            lblSearch = new Label();
+
+            dgvProducts = new DataGridView();
+
+            panelPaging = new Panel();
+            btnNext = new Button();
+            lblPaging = new Label();
+            btnPrev = new Button();
+
+            panelInputs.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudStock).BeginInit();
-            topPanel.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)nudPrice).BeginInit();
+            panelSearch.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvProducts).BeginInit();
+            panelPaging.SuspendLayout();
             SuspendLayout();
             // 
-            // txtSearch
+            // panelInputs
             // 
-            txtSearch.Location = new Point(13, 13);
-            txtSearch.Name = "txtSearch";
-            txtSearch.PlaceholderText = "Mã vạch / tên sản phẩm";
-            txtSearch.Size = new Size(220, 23);
-            txtSearch.TabIndex = 0;
+            panelInputs.BorderStyle = BorderStyle.FixedSingle;
+            panelInputs.Controls.Add(btnDelete);
+            panelInputs.Controls.Add(btnUpdate);
+            panelInputs.Controls.Add(btnCreate);
+            panelInputs.Controls.Add(nudStock);
+            panelInputs.Controls.Add(lblStock);
+            panelInputs.Controls.Add(nudPrice);
+            panelInputs.Controls.Add(lblPrice);
+            panelInputs.Controls.Add(cboCategory);
+            panelInputs.Controls.Add(lblCategory);
+            panelInputs.Controls.Add(txtName);
+            panelInputs.Controls.Add(lblName);
+            panelInputs.Controls.Add(txtBarcode);
+            panelInputs.Controls.Add(lblBarcode);
+            panelInputs.Controls.Add(txtId);
+            panelInputs.Controls.Add(lblId);
+            panelInputs.Dock = DockStyle.Top;
+            panelInputs.Location = new Point(0, 0);
+            panelInputs.Name = "panelInputs";
+            panelInputs.Size = new Size(964, 115);
+            panelInputs.TabIndex = 0;
             // 
-            // cboFilter
+            // btnDelete
             // 
-            cboFilter.DropDownStyle = ComboBoxStyle.DropDownList;
-            cboFilter.Location = new Point(239, 13);
-            cboFilter.Name = "cboFilter";
-            cboFilter.Size = new Size(160, 23);
-            cboFilter.TabIndex = 1;
+            btnDelete.BackColor = Color.Firebrick;
+            btnDelete.ForeColor = Color.White;
+            btnDelete.Location = new Point(560, 75);
+            btnDelete.Name = "btnDelete";
+            btnDelete.Size = new Size(110, 30);
+            btnDelete.TabIndex = 14;
+            btnDelete.Text = "Xóa hàng";
+            btnDelete.UseVisualStyleBackColor = false;
+            // 
+            // btnUpdate
+            // 
+            btnUpdate.BackColor = Color.RoyalBlue;
+            btnUpdate.ForeColor = Color.White;
+            btnUpdate.Location = new Point(440, 75);
+            btnUpdate.Name = "btnUpdate";
+            btnUpdate.Size = new Size(110, 30);
+            btnUpdate.TabIndex = 13;
+            btnUpdate.Text = "Cập nhật";
+            btnUpdate.UseVisualStyleBackColor = false;
+            // 
+            // btnCreate
+            // 
+            btnCreate.BackColor = Color.SeaGreen;
+            btnCreate.ForeColor = Color.White;
+            btnCreate.Location = new Point(320, 75);
+            btnCreate.Name = "btnCreate";
+            btnCreate.Size = new Size(110, 30);
+            btnCreate.TabIndex = 12;
+            btnCreate.Text = "Thêm mới";
+            btnCreate.UseVisualStyleBackColor = false;
+            // 
+            // nudStock
+            // 
+            nudStock.Location = new Point(380, 42);
+            Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
+            nudStock.Name = "nudStock";
+            nudStock.Size = new Size(150, 23);
+            nudStock.TabIndex = 11;
+            // 
+            // lblStock
+            // 
+            lblStock.AutoSize = true;
+            lblStock.Location = new Point(310, 44);
+            lblStock.Name = "lblStock";
+            lblStock.Size = new Size(64, 15);
+            lblStock.TabIndex = 10;
+            lblStock.Text = "TỒN KHO:";
+            // 
+            // nudPrice
+            // 
+            nudPrice.Location = new Point(85, 42);
+            nudPrice.Maximum = new decimal(new int[] { 1000000000, 0, 0, 0 });
+            nudPrice.Name = "nudPrice";
+            nudPrice.Size = new Size(200, 23);
+            nudPrice.TabIndex = 9;
+            nudPrice.ThousandsSeparator = true;
+            // 
+            // lblPrice
+            // 
+            lblPrice.AutoSize = true;
+            lblPrice.Location = new Point(12, 44);
+            lblPrice.Name = "lblPrice";
+            lblPrice.Size = new Size(58, 15);
+            lblPrice.TabIndex = 8;
+            lblPrice.Text = "GIÁ BÁN:";
+            // 
+            // cboCategory
+            // 
+            cboCategory.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboCategory.FormattingEnabled = true;
+            cboCategory.Location = new Point(740, 10);
+            cboCategory.Name = "cboCategory";
+            cboCategory.Size = new Size(210, 23);
+            cboCategory.TabIndex = 7;
+            // 
+            // lblCategory
+            // 
+            lblCategory.AutoSize = true;
+            lblCategory.Location = new Point(680, 13);
+            lblCategory.Name = "lblCategory";
+            lblCategory.Size = new Size(47, 15);
+            lblCategory.TabIndex = 6;
+            lblCategory.Text = "NHÓM:";
+            // 
+            // txtName
+            // 
+            txtName.Location = new Point(410, 10);
+            txtName.Name = "txtName";
+            txtName.Size = new Size(250, 23);
+            txtName.TabIndex = 5;
+            // 
+            // lblName
+            // 
+            lblName.AutoSize = true;
+            lblName.Location = new Point(350, 13);
+            lblName.Name = "lblName";
+            lblName.Size = new Size(48, 15);
+            lblName.TabIndex = 4;
+            lblName.Text = "TÊN SP:";
+            // 
+            // txtBarcode
+            // 
+            txtBarcode.Location = new Point(180, 10);
+            txtBarcode.Name = "txtBarcode";
+            txtBarcode.Size = new Size(150, 23);
+            txtBarcode.TabIndex = 3;
+            // 
+            // lblBarcode
+            // 
+            lblBarcode.AutoSize = true;
+            lblBarcode.Location = new Point(105, 13);
+            lblBarcode.Name = "lblBarcode";
+            lblBarcode.Size = new Size(65, 15);
+            lblBarcode.TabIndex = 2;
+            lblBarcode.Text = "MÃ VẠCH:";
+            // 
+            // txtId
+            // 
+            txtId.Location = new Point(45, 10);
+            txtId.Name = "txtId";
+            txtId.ReadOnly = true;
+            txtId.Size = new Size(50, 23);
+            txtId.TabIndex = 1;
+            // 
+            // lblId
+            // 
+            lblId.AutoSize = true;
+            lblId.Location = new Point(12, 13);
+            lblId.Name = "lblId";
+            lblId.Size = new Size(21, 15);
+            lblId.TabIndex = 0;
+            lblId.Text = "ID:";
+            // 
+            // panelSearch
+            // 
+            panelSearch.BorderStyle = BorderStyle.FixedSingle;
+            panelSearch.Controls.Add(btnSearch);
+            panelSearch.Controls.Add(txtSearch);
+            panelSearch.Controls.Add(lblSearch);
+            panelSearch.Dock = DockStyle.Top;
+            panelSearch.Location = new Point(0, 115);
+            panelSearch.Name = "panelSearch";
+            panelSearch.Size = new Size(964, 45);
+            panelSearch.TabIndex = 1;
             // 
             // btnSearch
             // 
-            btnSearch.Location = new Point(405, 13);
+            btnSearch.Location = new Point(330, 9);
             btnSearch.Name = "btnSearch";
-            btnSearch.Size = new Size(90, 23);
+            btnSearch.Size = new Size(75, 25);
             btnSearch.TabIndex = 2;
-            btnSearch.Text = "Tìm kiếm";
+            btnSearch.Text = "Tìm";
+            btnSearch.UseVisualStyleBackColor = true;
             // 
-            // dgv
+            // txtSearch
             // 
-            dgv.AllowUserToAddRows = false;
-            dgv.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            dgv.BackgroundColor = Color.White;
-            dgv.Dock = DockStyle.Fill;
-            dgv.Location = new Point(0, 48);
-            dgv.Name = "dgv";
-            dgv.ReadOnly = true;
-            dgv.RowHeadersVisible = false;
-            dgv.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dgv.Size = new Size(624, 413);
-            dgv.TabIndex = 0;
+            txtSearch.Location = new Point(80, 10);
+            txtSearch.Name = "txtSearch";
+            txtSearch.PlaceholderText = "Nhập mã vạch hoặc tên sản phẩm...";
+            txtSearch.Size = new Size(240, 23);
+            txtSearch.TabIndex = 1;
             // 
-            // panelRight
+            // lblSearch
             // 
-            panelRight.ColumnCount = 2;
-            panelRight.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 90F));
-            panelRight.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
-            panelRight.Dock = DockStyle.Right;
-            panelRight.Location = new Point(624, 48);
-            panelRight.Name = "panelRight";
-            panelRight.Padding = new Padding(10);
-            panelRight.RowCount = 8;
-            panelRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
-            panelRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
-            panelRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
-            panelRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
-            panelRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
-            panelRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
-            panelRight.RowStyles.Add(new RowStyle(SizeType.Absolute, 35F));
-            panelRight.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
-            panelRight.Size = new Size(340, 413);
-            panelRight.TabIndex = 1;
-
-            // Đưa các dòng nhập liệu vào panelRight theo từng hàng
-            AddInputRow("Mã ID:", txtId, lblId, panelRight, 0);
-            AddInputRow("Mã vạch:", txtBarcode, lblBarcode, panelRight, 1);
-            AddInputRow("Tên SP:", txtName, lblName, panelRight, 2);
-            AddInputRow("Đơn giá:", nudPrice, lblPrice, panelRight, 3);
-            AddInputRow("Tồn kho:", nudStock, lblStock, panelRight, 4);
-            AddInputRow("Đơn vị:", txtUnit, lblUnit, panelRight, 5);
-            AddInputRow("Nhóm hàng:", cboCategory, lblCategory, panelRight, 6);
-
+            lblSearch.AutoSize = true;
+            lblSearch.Location = new Point(12, 13);
+            lblSearch.Name = "lblSearch";
+            lblSearch.Size = new Size(60, 15);
+            lblSearch.TabIndex = 0;
+            lblSearch.Text = "Tìm kiếm:";
             // 
-            // panelButtons
+            // dgvProducts
             // 
-            panelButtons.AutoSize = true;
-            panelButtons.Controls.Add(btnNew);
-            panelButtons.Controls.Add(btnAdd);
-            panelButtons.Controls.Add(btnUpdate);
-            panelButtons.Controls.Add(btnDelete);
-            panelButtons.Dock = DockStyle.Fill;
-            panelButtons.Location = new Point(13, 255);
-            panelButtons.Name = "panelButtons";
-            panelButtons.Size = new Size(314, 145);
-            panelButtons.TabIndex = 0;
-
-            panelRight.Controls.Add(panelButtons, 0, 7);
-            panelRight.SetColumnSpan(panelButtons, 2);
-
-            // Cấu hình thuộc tính cho các control riêng lẻ
-            txtId.ReadOnly = true;
-            nudPrice.Maximum = new decimal(new int[] { 1000000000, 0, 0, 0 });
-            nudPrice.ThousandsSeparator = true;
-            nudStock.Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
-            cboCategory.DropDownStyle = ComboBoxStyle.DropDownList;
-
+            dgvProducts.AllowUserToAddRows = false;
+            dgvProducts.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvProducts.BackgroundColor = Color.White;
+            dgvProducts.Dock = DockStyle.Fill;
+            dgvProducts.Location = new Point(0, 160);
+            dgvProducts.Name = "dgvProducts";
+            dgvProducts.ReadOnly = true;
+            dgvProducts.RowHeadersVisible = false;
+            dgvProducts.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvProducts.Size = new Size(964, 256);
+            dgvProducts.TabIndex = 2;
             // 
-            // topPanel
+            // panelPaging
             // 
-            topPanel.Controls.Add(txtSearch);
-            topPanel.Controls.Add(cboFilter);
-            topPanel.Controls.Add(btnSearch);
-            topPanel.Dock = DockStyle.Top;
-            topPanel.Location = new Point(0, 0);
-            topPanel.Name = "topPanel";
-            topPanel.Padding = new Padding(10, 10, 0, 0);
-            topPanel.Size = new Size(964, 48);
-            topPanel.TabIndex = 2;
+            panelPaging.BorderStyle = BorderStyle.FixedSingle;
+            panelPaging.Controls.Add(btnNext);
+            panelPaging.Controls.Add(lblPaging);
+            panelPaging.Controls.Add(btnPrev);
+            panelPaging.Dock = DockStyle.Bottom;
+            panelPaging.Location = new Point(0, 416);
+            panelPaging.Name = "panelPaging";
+            panelPaging.Size = new Size(964, 45);
+            panelPaging.TabIndex = 3;
+            // 
+            // btnNext
+            // 
+            btnNext.Anchor = AnchorStyles.Top;
+            btnNext.Location = new Point(530, 9);
+            btnNext.Name = "btnNext";
+            btnNext.Size = new Size(90, 25);
+            btnNext.TabIndex = 2;
+            btnNext.Text = "Trang sau >>";
+            btnNext.UseVisualStyleBackColor = true;
+            // 
+            // lblPaging
+            // 
+            lblPaging.Anchor = AnchorStyles.Top;
+            lblPaging.AutoSize = true;
+            lblPaging.Location = new Point(445, 13);
+            lblPaging.Name = "lblPaging";
+            lblPaging.Size = new Size(60, 15);
+            lblPaging.TabIndex = 1;
+            lblPaging.Text = "Trang: 1 / 1";
+            // 
+            // btnPrev
+            // 
+            btnPrev.Anchor = AnchorStyles.Top;
+            btnPrev.Location = new Point(340, 9);
+            btnPrev.Name = "btnPrev";
+            btnPrev.Size = new Size(90, 25);
+            btnPrev.TabIndex = 0;
+            btnPrev.Text = "<< Trang trước";
+            btnPrev.UseVisualStyleBackColor = true;
             // 
             // FormProductManagement
             // 
             ClientSize = new Size(964, 461);
-            Controls.Add(dgv);
-            Controls.Add(panelRight);
-            Controls.Add(topPanel);
+            Controls.Add(dgvProducts);
+            Controls.Add(panelPaging);
+            Controls.Add(panelSearch);
+            Controls.Add(panelInputs);
             Name = "FormProductManagement";
             Text = "Quản lý sản phẩm";
-            ((System.ComponentModel.ISupportInitialize)dgv).EndInit();
-            panelRight.ResumeLayout(false);
-            panelRight.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)nudPrice).EndInit();
+            panelInputs.ResumeLayout(false);
+            panelInputs.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)nudStock).EndInit();
-            topPanel.ResumeLayout(false);
-            topPanel.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)nudPrice).EndInit();
+            panelSearch.ResumeLayout(false);
+            panelSearch.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)dgvProducts).EndInit();
+            panelPaging.ResumeLayout(false);
+            panelPaging.PerformLayout();
             ResumeLayout(false);
         }
 
-        private void AddInputRow(string labelText, Control c, Label lbl, TableLayoutPanel container, int rowIndex)
-        {
-            lbl.Text = labelText;
-            lbl.Anchor = AnchorStyles.Left;
-            lbl.AutoSize = true;
-            lbl.Margin = new Padding(0, 8, 0, 8);
-
-            c.Dock = DockStyle.Fill;
-            container.Controls.Add(lbl, 0, rowIndex);
-            container.Controls.Add(c, 1, rowIndex);
-        }
-
-        private static Button MakeBtn(string text, Color color) => new()
-        {
-            Text = text,
-            BackColor = color,
-            ForeColor = Color.White,
-            FlatStyle = FlatStyle.Flat,
-            Width = 72,
-            Height = 34,
-            Margin = new Padding(3, 3, 3, 3)
-        };
-
         #endregion
 
-        private TextBox txtSearch;
-        private ComboBox cboFilter;
-        private Button btnSearch;
-        private DataGridView dgv;
-        private TableLayoutPanel panelRight;
+        private Panel panelInputs;
         private TextBox txtId;
+        private Label lblId;
         private TextBox txtBarcode;
+        private Label lblBarcode;
         private TextBox txtName;
-        private NumericUpDown nudPrice;
-        private NumericUpDown nudStock;
-        private TextBox txtUnit;
+        private Label lblName;
         private ComboBox cboCategory;
-        private FlowLayoutPanel panelButtons;
-        private FlowLayoutPanel topPanel;
-        private Label lblId, lblBarcode, lblName, lblPrice, lblStock, lblUnit, lblCategory;
-        private Button btnNew, btnAdd, btnUpdate, btnDelete;
+        private Label lblCategory;
+        private NumericUpDown nudPrice;
+        private Label lblPrice;
+        private NumericUpDown nudStock;
+        private Label lblStock;
+        private Button btnCreate;
+        private Button btnUpdate;
+        private Button btnDelete;
+
+        private Panel panelSearch;
+        private Label lblSearch;
+        private TextBox txtSearch;
+        private Button btnSearch;
+
+        private DataGridView dgvProducts;
+
+        private Panel panelPaging;
+        private Button btnPrev;
+        private Label lblPaging;
+        private Button btnNext;
+
+        public decimal Maximum { get; private set; }
     }
 }

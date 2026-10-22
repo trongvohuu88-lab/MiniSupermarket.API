@@ -1,129 +1,166 @@
-﻿using Microsoft.EntityFrameworkCore;
+using System;
+using Microsoft.EntityFrameworkCore;
 using MiniSupermarket.API.Models;
 
 namespace MiniSupermarket.API.Data
 {
+    /// <summary>
+    /// Ngữ cảnh cơ sở dữ liệu đại diện cho phiên làm việc với SQL Server.
+    /// Quản lý 6 thực thể chính và cấu hình Data Seeding cho hệ thống Siêu thị Mini.
+    /// (Bảng Roles là phần mở rộng, phục vụ màn hình quản lý vai trò của WinForm.)
+    /// </summary>
     public class SupermarketDbContext : DbContext
     {
         public SupermarketDbContext(DbContextOptions<SupermarketDbContext> options) : base(options) { }
 
+        // 6 bảng dữ liệu của hệ thống
+        public DbSet<User> Users { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Product> Products { get; set; }
         public DbSet<Customer> Customers { get; set; }
+        public DbSet<Order> Orders { get; set; }
+        public DbSet<OrderDetail> OrderDetails { get; set; }
+
+        // Bảng mở rộng
         public DbSet<Role> Roles { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
 
-            // Cấu hình bảng Customers
-            modelBuilder.Entity<Customer>(entity =>
-            {
-                entity.Property(c => c.RewardPoints).HasDefaultValue(0);
-                entity.Property(c => c.MembershipRank).HasDefaultValue("Chuẩn");
-                entity.HasIndex(c => c.PhoneNumber).IsUnique();
-            });
+            // =====================================================================
+            // A. CẤU HÌNH RÀNG BUỘC CHỈ MỤC DUY NHẤT (UNIQUE INDEX)
+            // =====================================================================
+            modelBuilder.Entity<User>().HasIndex(u => u.Username).IsUnique();
+            modelBuilder.Entity<Category>().HasIndex(c => c.CategoryName).IsUnique();
+            modelBuilder.Entity<Product>().HasIndex(p => p.Barcode).IsUnique();
+            modelBuilder.Entity<Customer>().HasIndex(c => c.PhoneNumber).IsUnique();
+            modelBuilder.Entity<Order>().HasIndex(o => o.OrderCode).IsUnique();
 
-            // 1. SEED DATA: 30 CATEGORIES (Danh mục hàng hóa Phố Thị)
+            // =====================================================================
+            // B. DATA SEEDING
+            // =====================================================================
+
+            // 1. USERS (15 nhân viên: Admin, Cashier, Warehouse)
+            modelBuilder.Entity<User>().HasData(
+                new User { UserId = 1, Username = "admin", PasswordHash = "admin@123", FullName = "Nguyễn Quản Trị", Role = "Admin", IsActive = true },
+                new User { UserId = 2, Username = "manager01", PasswordHash = "manager@123", FullName = "Trần Cửa Hàng Trưởng", Role = "Admin", IsActive = true },
+                new User { UserId = 3, Username = "cashier01", PasswordHash = "cashier@123", FullName = "Lê Thu Ngân 1", Role = "Cashier", IsActive = true },
+                new User { UserId = 4, Username = "cashier02", PasswordHash = "cashier@123", FullName = "Phạm Thu Ngân 2", Role = "Cashier", IsActive = true },
+                new User { UserId = 5, Username = "cashier03", PasswordHash = "cashier@123", FullName = "Hoàng Thu Ngân 3", Role = "Cashier", IsActive = true },
+                new User { UserId = 6, Username = "cashier04", PasswordHash = "cashier@123", FullName = "Vũ Thu Ngân 4", Role = "Cashier", IsActive = true },
+                new User { UserId = 7, Username = "cashier05", PasswordHash = "cashier@123", FullName = "Đỗ Thu Ngân 5", Role = "Cashier", IsActive = true },
+                new User { UserId = 8, Username = "cashier06", PasswordHash = "cashier@123", FullName = "Ngô Thu Ngân 6", Role = "Cashier", IsActive = true },
+                new User { UserId = 9, Username = "cashier07", PasswordHash = "cashier@123", FullName = "Bùi Thu Ngân 7", Role = "Cashier", IsActive = true },
+                new User { UserId = 10, Username = "warehouse01", PasswordHash = "wh@123", FullName = "Đặng Thủ Kho 1", Role = "Warehouse", IsActive = true },
+                new User { UserId = 11, Username = "warehouse02", PasswordHash = "wh@123", FullName = "Trương Thủ Kho 2", Role = "Warehouse", IsActive = true },
+                new User { UserId = 12, Username = "warehouse03", PasswordHash = "wh@123", FullName = "Lý Kiểm Kê", Role = "Warehouse", IsActive = true },
+                new User { UserId = 13, Username = "cashier08", PasswordHash = "cashier@123", FullName = "Mai Thu Ngân 8", Role = "Cashier", IsActive = true },
+                new User { UserId = 14, Username = "cashier09", PasswordHash = "cashier@123", FullName = "Dương Thu Ngân 9", Role = "Cashier", IsActive = true },
+                new User { UserId = 15, Username = "staff_lock", PasswordHash = "lock@123", FullName = "Hồ Nhân Viên Nghỉ Việc", Role = "Cashier", IsActive = false }
+            );
+
+            // 2. CATEGORIES (15 nhóm hàng)
             modelBuilder.Entity<Category>().HasData(
-                new Category { CategoryId = 1, CategoryName = "Bánh kẹo & Đồ ăn vặt", Description = "Snack, bánh quy, kẹo dẻo" },
-                new Category { CategoryId = 2, CategoryName = "Nước giải khát & Trà", Description = "Nước ngọt, nước khoáng, trà lon" },
-                new Category { CategoryId = 3, CategoryName = "Sữa & Sản phẩm từ sữa", Description = "Sữa tươi, sữa chua, phô mai, bơ" },
-                new Category { CategoryId = 4, CategoryName = "Mì gói & Thực phẩm ăn liền", Description = "Mì, phở, cháo gói, hủ tiếu ăn liền" },
-                new Category { CategoryId = 5, CategoryName = "Gia vị & Dầu ăn", Description = "Nước mắm, hạt nêm, dầu ăn, nước tương" },
-                new Category { CategoryId = 6, CategoryName = "Gạo, Bột & Khô", Description = "Gạo thơm, bột mỹ, miến, bún khô" },
-                new Category { CategoryId = 7, CategoryName = "Đồ đóng hộp & Chế biến sẵn", Description = "Cá hộp, thịt hộp, xúc xích, pate" },
-                new Category { CategoryId = 8, CategoryName = "Hóa mỹ phẩm & Vệ sinh cá nhân", Description = "Dầu gội, sữa tắm, kem đánh răng, xà phòng" },
-                new Category { CategoryId = 9, CategoryName = "Chăm sóc nhà cửa", Description = "Nước lau sàn, nước rửa chén, bột giặt" },
-                new Category { CategoryId = 10, CategoryName = "Khăn giấy & Tã bỉm", Description = "Giấy vệ sinh, khăn giấy khô/ướt, tã em bé" },
-                new Category { CategoryId = 11, CategoryName = "Thực phẩm đông lạnh", Description = "Cá viên, bò viên, chả giò, há cảo" },
-                new Category { CategoryId = 12, CategoryName = "Kem & Đồ lạnh", Description = "Kem que, kem hộp, đá viên đóng túi" },
-                new Category { CategoryId = 13, CategoryName = "Bia & Đồ uống có cồn", Description = "Bia lon, rượu nhẹ, cồn thực phẩm" },
-                new Category { CategoryId = 14, CategoryName = "Cà phê & Cacao", Description = "Cà phê hòa tan, cà phê rang xay, bột cacao" },
-                new Category { CategoryId = 15, CategoryName = "Trái cây tươi Phố Thị", Description = "Táo, chuối, cam, dưa hấu theo mùa" },
-                new Category { CategoryId = 16, CategoryName = "Rau củ & Nấm tươi", Description = "Rau cải, cà chua, khoai tây, nấm rơm" },
-                new Category { CategoryId = 17, CategoryName = "Thực phẩm tươi sống", Description = "Thịt heo, thịt gà, trứng gia cầm" },
-                new Category { CategoryId = 18, CategoryName = "Hạt & Đồ khô ăn kiêng", Description = "Hạt điều, hạnh nhân, yến mạch, granola" },
-                new Category { CategoryId = 19, CategoryName = "Bánh tươi Phố Thị", Description = "Bánh mì sandwich, bánh giò, bánh bao" },
-                new Category { CategoryId = 20, CategoryName = "Đồ dùng gia đình nhỏ", Description = "Màng bọc thực phẩm, túi bóng, đũa muỗng" },
-                new Category { CategoryId = 21, CategoryName = "Văn phòng phẩm tạp hóa", Description = "Bút, tập học sinh, băng keo, kéo" },
-                new Category { CategoryId = 22, CategoryName = "Chăm sóc thú cưng", Description = "Thức ăn cho chó mèo, cát vệ sinh" },
-                new Category { CategoryId = 23, CategoryName = "Sản phẩm Mẹ & Bé", Description = "Sữa bột, bình sữa, rơ lưỡi, ty giả" },
-                new Category { CategoryId = 24, CategoryName = "Thuốc không kê đơn & Y tế", Description = "Khẩu y tế, bông gòn, dầu gió, C sủi" },
-                new Category { CategoryId = 25, CategoryName = "Đồ kim khí & Điện gia dụng", Description = "Pin AA/AAA, bóng đèn, ổ cắm, băng keo điện" },
-                new Category { CategoryId = 26, CategoryName = "Trà thảo mộc & Đông y", Description = "Trà atiso, trà hoa cúc, mủ trôm, hạt chia" },
-                new Category { CategoryId = 27, CategoryName = "Nước mát Phố Thị", Description = "Nước nha đam, sâm mát, rau má đóng chai" },
-                new Category { CategoryId = 28, CategoryName = "Đồ ăn vặt truyền thống", Description = "Bánh tráng trộn, cơm cháy, mứt tép" },
-                new Category { CategoryId = 29, CategoryName = "Thời trang & Phụ kiện nhỏ", Description = "Khẩu trang vải, tất chân, áo mưa tiện lợi" },
-                new Category { CategoryId = 30, CategoryName = "Đồ lưu niệm & Quà tặng Phố Thị", Description = "Túi vải Phố Thị, thiệp mừng, gấu bông nhỏ" }
+                new Category { CategoryId = 1, CategoryName = "Bánh kẹo & Đồ ăn vặt", Description = "Snack khoai tây, bánh quy bơ, kẹo trái cây" },
+                new Category { CategoryId = 2, CategoryName = "Nước giải khát & Trà", Description = "Nước ngọt lon, nước khoáng thiên nhiên, trà xanh đóng chai" },
+                new Category { CategoryId = 3, CategoryName = "Sữa & Sản phẩm từ sữa", Description = "Sữa tươi tiệt trùng, sữa đặc, sữa chua ăn, phô mai lát" },
+                new Category { CategoryId = 4, CategoryName = "Mì gói & Thực phẩm ăn liền", Description = "Mì ăn liền, hủ tiếu, phở khô, cháo gói dinh dưỡng" },
+                new Category { CategoryId = 5, CategoryName = "Gia vị & Dầu ăn", Description = "Nước mắm cá cơm, hạt nêm, dầu ăn nguyên chất, muối i-ốt" },
+                new Category { CategoryId = 6, CategoryName = "Đồ hộp & Chế biến sẵn", Description = "Cá hộp sốt cà, thịt heo hầm hộp, pate gan, xúc xích ăn liền" },
+                new Category { CategoryId = 7, CategoryName = "Hóa phẩm tẩy rửa", Description = "Nước giặt xả, nước lau sàn nhà, nước rửa chén, bột tẩy" },
+                new Category { CategoryId = 8, CategoryName = "Chăm sóc cá nhân", Description = "Dầu gội đầu, sữa tắm dưỡng ẩm, kem đánh răng, xà phòng" },
+                new Category { CategoryId = 9, CategoryName = "Đồ gia dụng tiện ích", Description = "Màng bọc thực phẩm, túi rác sinh học, khăn giấy rút, pin tiểu" },
+                new Category { CategoryId = 10, CategoryName = "Rau củ tươi sạch", Description = "Cà chua bi, rau cải xanh, khoai tây, cà rốt Đà Lạt" },
+                new Category { CategoryId = 11, CategoryName = "Thịt tươi & Thủy sản", Description = "Thịt ba chỉ heo, ức gà phi lê, cá phi lê tươi sống" },
+                new Category { CategoryId = 12, CategoryName = "Thực phẩm đông lạnh", Description = "Bánh bao nhân thịt, há cảo hấp, cá viên, bò viên chiên" },
+                new Category { CategoryId = 13, CategoryName = "Cà phê & Ngũ cốc", Description = "Cà phê hòa tan 3in1, bột yến mạch, bột ngũ cốc dinh dưỡng" },
+                new Category { CategoryId = 14, CategoryName = "Văn phòng phẩm mini", Description = "Bút bi bấm, vở viết học sinh, kéo cắt giấy văn phòng" },
+                new Category { CategoryId = 15, CategoryName = "Vật tư đóng gói POS", Description = "Bao xốp quầy thu ngân, giấy in bill nhiệt k80, tem dán nhãn" }
             );
 
-            // 2. SEED DATA: 30 PRODUCTS (Sản phẩm bán lẻ Phố Thị)
+            // 3. PRODUCTS (20 mặt hàng)
             modelBuilder.Entity<Product>().HasData(
-                new Product { ProductId = 1, CategoryId = 1, ProductName = "Bánh Lay's Vị Tự Nhiên 63g", Price = 12000, StockQuantity = 150, Barcode = "893456789001" },
-                new Product { ProductId = 2, CategoryId = 1, ProductName = "Kẹo Dẻo Haribo Goldbears 80g", Price = 25000, StockQuantity = 80, Barcode = "893456789002" },
-                new Product { ProductId = 3, CategoryId = 2, ProductName = "Nước Ngọt Coca-Cola Lon 320ml", Price = 10000, StockQuantity = 300, Barcode = "893456789003" },
-                new Product { ProductId = 4, CategoryId = 2, ProductName = "Trà Green Tea C2 Vị Chanh 360ml", Price = 8000, StockQuantity = 250, Barcode = "893456789004" },
-                new Product { ProductId = 5, CategoryId = 3, ProductName = "Sữa Tươi Vinamilk Ít Đường 1L", Price = 38000, StockQuantity = 90, Barcode = "893456789005" },
-                new Product { ProductId = 6, CategoryId = 3, ProductName = "Sữa Chua TH True Milk Lốc 4 Hộp", Price = 28000, StockQuantity = 110, Barcode = "893456789006" },
-                new Product { ProductId = 7, CategoryId = 4, ProductName = "Mì Hảo Hảo Vị Tôm Chua Cay 75g", Price = 4500, StockQuantity = 500, Barcode = "893456789007" },
-                new Product { ProductId = 8, CategoryId = 4, ProductName = "Phở Bò Đệ Nhất Gói 120g", Price = 8500, StockQuantity = 200, Barcode = "893456789008" },
-                new Product { ProductId = 9, CategoryId = 5, ProductName = "Nước Mắm Nam Ngư Đệ Nhất 900ml", Price = 42000, StockQuantity = 75, Barcode = "893456789009" },
-                new Product { ProductId = 10, CategoryId = 5, ProductName = "Dầu Ăn Tường An Cooking Oil 1L", Price = 52000, StockQuantity = 60, Barcode = "893456789010" },
-                new Product { ProductId = 11, CategoryId = 6, ProductName = "Gạo ST25 Phố Thị Túi 5kg", Price = 180000, StockQuantity = 40, Barcode = "893456789011" },
-                new Product { ProductId = 12, CategoryId = 7, ProductName = "Cá Sốt Cà Ba Cô Gái Hộp 155g", Price = 19000, StockQuantity = 120, Barcode = "893456789012" },
-                new Product { ProductId = 13, CategoryId = 8, ProductName = "Dầu Gội Sunsilk Mềm Mượt 650g", Price = 135000, StockQuantity = 35, Barcode = "893456789013" },
-                new Product { ProductId = 14, CategoryId = 9, ProductName = "Nước Rửa Chén Sunlight Chanh 750ml", Price = 32000, StockQuantity = 85, Barcode = "893456789014" },
-                new Product { ProductId = 15, CategoryId = 10, ProductName = "Giấy Vệ Sinh Pulppy 10 Cuộn", Price = 75000, StockQuantity = 65, Barcode = "893456789015" },
-                new Product { ProductId = 16, CategoryId = 11, ProductName = "Chả Giò Cầu Tre Nhân Thịt 500g", Price = 65000, StockQuantity = 45, Barcode = "893456789016" },
-                new Product { ProductId = 17, CategoryId = 12, ProductName = "Kem Merino Đậu Đỏ Que 60g", Price = 12000, StockQuantity = 100, Barcode = "893456789017" },
-                new Product { ProductId = 18, CategoryId = 13, ProductName = "Bia Tiger Lon 330ml", Price = 18500, StockQuantity = 400, Barcode = "893456789018" },
-                new Product { ProductId = 19, CategoryId = 14, ProductName = "Cà Phê G7 3in1 Hộp 18 Gói", Price = 58000, StockQuantity = 95, Barcode = "893456789019" },
-                new Product { ProductId = 20, CategoryId = 15, ProductName = "Cam Sành Miền Tây (1kg)", Price = 25000, StockQuantity = 50, Barcode = "893456789020" },
-                new Product { ProductId = 21, CategoryId = 16, ProductName = "Cà Chua Đà Lạt Fresh (500g)", Price = 15000, StockQuantity = 40, Barcode = "893456789021" },
-                new Product { ProductId = 22, CategoryId = 17, ProductName = "Trứng Gà Tươi Vĩnh Thành Đạt (Hộp 10 quả)", Price = 31000, StockQuantity = 100, Barcode = "893456789022" },
-                new Product { ProductId = 23, CategoryId = 18, ProductName = "Hạt Điều Rang Salted Phố Thị 200g", Price = 68000, StockQuantity = 55, Barcode = "893456789023" },
-                new Product { ProductId = 24, CategoryId = 19, ProductName = "Bánh Mì Sandwich Kinh Đô 275g", Price = 22000, StockQuantity = 30, Barcode = "893456789024" },
-                new Product { ProductId = 25, CategoryId = 20, ProductName = "Màng Bọc Thực Phẩm Lasms 30cm", Price = 35000, StockQuantity = 70, Barcode = "893456789025" },
-                new Product { ProductId = 26, CategoryId = 21, ProductName = "Bút Cầu Gel Thiên Long 0.5mm", Price = 6000, StockQuantity = 200, Barcode = "893456789026" },
-                new Product { ProductId = 27, CategoryId = 22, ProductName = "Pate Cho Mèo Whiskas Vị Cá Biển 85g", Price = 16000, StockQuantity = 80, Barcode = "893456789027" },
-                new Product { ProductId = 28, CategoryId = 24, ProductName = "Khẩu Trang Y Tế 4 Lớp Phố Thị (Hộp 50 cái)", Price = 35000, StockQuantity = 150, Barcode = "893456789028" },
-                new Product { ProductId = 29, CategoryId = 25, ProductName = "Pin AA Panasonic Hyper Vỉ 4 Viên", Price = 20000, StockQuantity = 110, Barcode = "893456789029" },
-                new Product { ProductId = 30, CategoryId = 28, ProductName = "Cơm Cháy Chà Bông Phố Thị 150g", Price = 28000, StockQuantity = 90, Barcode = "893456789030" }
+                new Product { ProductId = 1, Barcode = "893456789001", ProductName = "Snack Khoai Tây O'Star Gói 60g", Price = 12500m, StockQuantity = 150, CategoryId = 1 },
+                new Product { ProductId = 2, Barcode = "893456789002", ProductName = "Bánh Quy Bơ Danisa Hộp Thiếc 454g", Price = 135000m, StockQuantity = 40, CategoryId = 1 },
+                new Product { ProductId = 3, Barcode = "893456789003", ProductName = "Kẹo Dẻo Chupa Chups Hương Trái Cây 90g", Price = 15000m, StockQuantity = 120, CategoryId = 1 },
+                new Product { ProductId = 4, Barcode = "893456789004", ProductName = "Bánh Chocopie Orion Hộp 12 Cái", Price = 54000m, StockQuantity = 60, CategoryId = 1 },
+                new Product { ProductId = 5, Barcode = "893456789005", ProductName = "Nước Ngọt Coca Cola Lon 320ml", Price = 10000m, StockQuantity = 320, CategoryId = 2 },
+                new Product { ProductId = 6, Barcode = "893456789006", ProductName = "Nước Khoáng Thiên Nhiên Lavie Chai 500ml", Price = 6000m, StockQuantity = 200, CategoryId = 2 },
+                new Product { ProductId = 7, Barcode = "893456789007", ProductName = "Trà Xanh Không Độ Chai 455ml", Price = 11000m, StockQuantity = 180, CategoryId = 2 },
+                new Product { ProductId = 8, Barcode = "893456789008", ProductName = "Nước Tăng Lực Red Bull Lon 250ml", Price = 14500m, StockQuantity = 150, CategoryId = 2 },
+                new Product { ProductId = 9, Barcode = "893456789009", ProductName = "Sữa Tươi Tiệt Trùng Vinamilk Có Đường 1L", Price = 34500m, StockQuantity = 85, CategoryId = 3 },
+                new Product { ProductId = 10, Barcode = "893456789010", ProductName = "Phô Mai Con Bò Cười Hộp 8 Miếng", Price = 39000m, StockQuantity = 60, CategoryId = 3 },
+                new Product { ProductId = 11, Barcode = "893456789011", ProductName = "Sữa Chua Ăn Vinamilk Có Đường Lốc 4 Hộp", Price = 28000m, StockQuantity = 95, CategoryId = 3 },
+                new Product { ProductId = 12, Barcode = "893456789012", ProductName = "Sữa Đặc Có Đường Ông Thọ Lon 380g", Price = 26000m, StockQuantity = 110, CategoryId = 3 },
+                new Product { ProductId = 13, Barcode = "893456789013", ProductName = "Mì Tôm Hảo Hảo Chua Cay Gói 75g", Price = 4500m, StockQuantity = 500, CategoryId = 4 },
+                new Product { ProductId = 14, Barcode = "893456789014", ProductName = "Phở Bò Đệ Nhất Gói 68g", Price = 8500m, StockQuantity = 140, CategoryId = 4 },
+                new Product { ProductId = 15, Barcode = "893456789015", ProductName = "Mì Trộn Tương Đen Koreno Gói 115g", Price = 14000m, StockQuantity = 80, CategoryId = 4 },
+                new Product { ProductId = 16, Barcode = "893456789016", ProductName = "Dầu Ăn Simply Nguyên Chất Can 2L", Price = 125000m, StockQuantity = 45, CategoryId = 5 },
+                new Product { ProductId = 17, Barcode = "893456789017", ProductName = "Nước Mắm Nam Ngư Đệ Nhị Chai 900ml", Price = 30000m, StockQuantity = 90, CategoryId = 5 },
+                new Product { ProductId = 18, Barcode = "893456789018", ProductName = "Hạt Nêm Knorr Từ Thịt Thăn Gói 400g", Price = 36000m, StockQuantity = 75, CategoryId = 5 },
+                new Product { ProductId = 19, Barcode = "893456789019", ProductName = "Cá Nục Sốt Cà Ba Cô Gái Hộp 155g", Price = 19000m, StockQuantity = 130, CategoryId = 6 },
+                new Product { ProductId = 20, Barcode = "893456789020", ProductName = "Nước Rửa Chén Sunlight Chanh Chai 750g", Price = 29000m, StockQuantity = 80, CategoryId = 7 }
             );
 
-            // 3. SEED DATA: 30 CUSTOMERS (Khách hàng thân thiết Phố Thị)
+            // 4. CUSTOMERS (15 khách hàng thân thiết)
             modelBuilder.Entity<Customer>().HasData(
-                new Customer { CustomerId = 1, CustomerName = "Nguyễn Văn A", PhoneNumber = "0901122334", MembershipRank = "Vàng", RewardPoints = 150, Address = "12 Nguyễn Trãi, Q.1, TP.HCM" },
-                new Customer { CustomerId = 2, CustomerName = "Trần Thị B", PhoneNumber = "0918877665", MembershipRank = "Bạc", RewardPoints = 50, Address = "45 Lê Lợi, Q.1, TP.HCM" },
-                new Customer { CustomerId = 3, CustomerName = "Lê Văn C", PhoneNumber = "0983344556", MembershipRank = "Chuẩn", RewardPoints = 10, Address = "88 CMT8, Q.3, TP.HCM" },
-                new Customer { CustomerId = 4, CustomerName = "Phạm Hoàng Dũng", PhoneNumber = "0934567891", MembershipRank = "Kim Cương", RewardPoints = 520, Address = "102 Võ Văn Tần, Q.3, TP.HCM" },
-                new Customer { CustomerId = 5, CustomerName = "Hoàng Thị Mai", PhoneNumber = "0978123456", MembershipRank = "Vàng", RewardPoints = 210, Address = "15 Lý Tự Trọng, Q.1, TP.HCM" },
-                new Customer { CustomerId = 6, CustomerName = "Vũ Đình Trọng", PhoneNumber = "0965432187", MembershipRank = "Chuẩn", RewardPoints = 0, Address = "23 Trần Hưng Đạo, Q.5, TP.HCM" },
-                new Customer { CustomerId = 7, CustomerName = "Đặng Thu Thảo", PhoneNumber = "0923456789", MembershipRank = "Bạc", RewardPoints = 85, Address = "67 Nguyễn Thị Minh Khai, Q.3, TP.HCM" },
-                new Customer { CustomerId = 8, CustomerName = "Bùi Anh Tuấn", PhoneNumber = "0945678912", MembershipRank = "Chuẩn", RewardPoints = 25, Address = "120 Điện Biên Phủ, Bình Thạnh, TP.HCM" },
-                new Customer { CustomerId = 9, CustomerName = "Đỗ Kim Ngân", PhoneNumber = "0912345678", MembershipRank = "Vàng", RewardPoints = 180, Address = "89 Hai Bà Trưng, Q.1, TP.HCM" },
-                new Customer { CustomerId = 10, CustomerName = "Hồ Văn Khoa", PhoneNumber = "0987654321", MembershipRank = "Bạc", RewardPoints = 95, Address = "34 Hoàng Văn Thụ, Phú Nhuận, TP.HCM" },
-                new Customer { CustomerId = 11, CustomerName = "Ngoạn Thị Bích", PhoneNumber = "0909988776", MembershipRank = "Chuẩn", RewardPoints = 5, Address = "56 Xô Viết Nghệ Tĩnh, Bình Thạnh, TP.HCM" },
-                new Customer { CustomerId = 12, CustomerName = "Dương Quốc Bảo", PhoneNumber = "0933221100", MembershipRank = "Kim Cương", RewardPoints = 610, Address = "11 Sư Vạn Hạnh, Q.10, TP.HCM" },
-                new Customer { CustomerId = 13, CustomerName = "Lý Mỹ Linh", PhoneNumber = "0977665544", MembershipRank = "Bạc", RewardPoints = 70, Address = "223 Ba Tháng Hai, Q.10, TP.HCM" },
-                new Customer { CustomerId = 14, CustomerName = "Huỳnh Minh Trí", PhoneNumber = "0944556677", MembershipRank = "Chuẩn", RewardPoints = 15, Address = "44 Phan Đăng Lưu, Phú Nhuận, TP.HCM" },
-                new Customer { CustomerId = 15, CustomerName = "Phan Thị Mỹ", PhoneNumber = "0911223344", MembershipRank = "Vàng", RewardPoints = 300, Address = "78 Lê Văn Sỹ, Q.3, TP.HCM" },
-                new Customer { CustomerId = 16, CustomerName = "Ngô Thành Nam", PhoneNumber = "0988990011", MembershipRank = "Chuẩn", RewardPoints = 0, Address = "90 Nguyễn Trãi, Q.5, TP.HCM" },
-                new Customer { CustomerId = 17, CustomerName = "Trịnh Khánh Vy", PhoneNumber = "0931122334", MembershipRank = "Bạc", RewardPoints = 60, Address = "101 Nguyễn Đình Chiểu, Q.3, TP.HCM" },
-                new Customer { CustomerId = 18, CustomerName = "Đinh Văn Hùng", PhoneNumber = "0961122334", MembershipRank = "Chuẩn", RewardPoints = 30, Address = "12 Đinh Tiên Hoàng, Q.1, TP.HCM" },
-                new Customer { CustomerId = 19, CustomerName = "Lương Hải Yến", PhoneNumber = "0921122334", MembershipRank = "Vàng", RewardPoints = 250, Address = "55 Pasteur, Q.1, TP.HCM" },
-                new Customer { CustomerId = 20, CustomerName = "Mai Văn Hải", PhoneNumber = "0951122334", MembershipRank = "Chuẩn", RewardPoints = 12, Address = "88 Nam Kỳ Khởi Nghĩa, Q.1, TP.HCM" },
-                new Customer { CustomerId = 21, CustomerName = "Cao Thị Hương", PhoneNumber = "0971122334", MembershipRank = "Bạc", RewardPoints = 90, Address = "202 Bùi Viện, Q.1, TP.HCM" },
-                new Customer { CustomerId = 22, CustomerName = "Tạ Quang Khải", PhoneNumber = "0941122334", MembershipRank = "Chuẩn", RewardPoints = 8, Address = "333 Nguyễn Oanh, Gò Vấp, TP.HCM" },
-                new Customer { CustomerId = 23, CustomerName = "Trương Tấn Phát", PhoneNumber = "0919988776", MembershipRank = "Kim Cương", RewardPoints = 800, Address = "150 Quang Trung, Gò Vấp, TP.HCM" },
-                new Customer { CustomerId = 24, CustomerName = "Thái Thị Ánh", PhoneNumber = "0989988776", MembershipRank = "Vàng", RewardPoints = 190, Address = "66 Phạm Văn Đồng, Thủ Đức, TP.HCM" },
-                new Customer { CustomerId = 25, CustomerName = "Lâm Văn Thanh", PhoneNumber = "0939988776", MembershipRank = "Chuẩn", RewardPoints = 2, Address = "12 Võ Văn Ngân, Thủ Đức, TP.HCM" },
-                new Customer { CustomerId = 26, CustomerName = "Đào Thúy Hằng", PhoneNumber = "0969988776", MembershipRank = "Bạc", RewardPoints = 55, Address = "88 Kha Vạn Cân, Thủ Đức, TP.HCM" },
-                new Customer { CustomerId = 27, CustomerName = "Vương Đình Tấn", PhoneNumber = "0929988776", MembershipRank = "Chuẩn", RewardPoints = 18, Address = "45 Lê Văn Việt, Q.9, TP.HCM" },
-                new Customer { CustomerId = 28, CustomerName = "Nguyễn Ngọc Ánh", PhoneNumber = "0959988776", MembershipRank = "Vàng", RewardPoints = 230, Address = "77 Đỗ Xuân Hợp, Q.9, TP.HCM" },
-                new Customer { CustomerId = 29, CustomerName = "Trần Bảo Lâm", PhoneNumber = "0979988776", MembershipRank = "Chuẩn", RewardPoints = 0, Address = "12 Nguyễn Duy Trinh, Q.2, TP.HCM" },
-                new Customer { CustomerId = 30, CustomerName = "Lê Thị Hồng", PhoneNumber = "0949988776", MembershipRank = "Kim Cương", RewardPoints = 950, Address = "01 Thảo Điền, Q.2, TP.HCM" }
+                new Customer { CustomerId = 1, CustomerName = "Trần Văn Hoàng", PhoneNumber = "0903123456", Address = "123 Lê Lợi, Quận 1, TPHCM", RewardPoints = 120, MembershipRank = "Bạc" },
+                new Customer { CustomerId = 2, CustomerName = "Nguyễn Thị Kim Loan", PhoneNumber = "0918234567", Address = "45 Điện Biên Phủ, Quận Bình Thạnh, TPHCM", RewardPoints = 350, MembershipRank = "Vàng" },
+                new Customer { CustomerId = 3, CustomerName = "Lê Minh Trí", PhoneNumber = "0977345678", Address = "88 Nam Kỳ Khởi Nghĩa, Quận 3, TPHCM", RewardPoints = 45, MembershipRank = "Chuẩn" },
+                new Customer { CustomerId = 4, CustomerName = "Phạm Hồng Nhung", PhoneNumber = "0988456789", Address = "102 Quang Trung, Quận Gò Vấp, TPHCM", RewardPoints = 520, MembershipRank = "Bạch Kim" },
+                new Customer { CustomerId = 5, CustomerName = "Võ Thành Nam", PhoneNumber = "0909567890", Address = "15 Phan Xích Long, Quận Phú Nhuận, TPHCM", RewardPoints = 80, MembershipRank = "Chuẩn" },
+                new Customer { CustomerId = 6, CustomerName = "Đỗ Thị Mỹ Duyên", PhoneNumber = "0933678901", Address = "234 Hoàng Văn Thụ, Quận Tân Bình, TPHCM", RewardPoints = 210, MembershipRank = "Bạc" },
+                new Customer { CustomerId = 7, CustomerName = "Hoàng Quốc Bảo", PhoneNumber = "0944789012", Address = "312 Ba Tháng Hai, Quận 10, TPHCM", RewardPoints = 15, MembershipRank = "Chuẩn" },
+                new Customer { CustomerId = 8, CustomerName = "Bùi Lan Hương", PhoneNumber = "0966890123", Address = "56 Nguyễn Thị Thập, Quận 7, TPHCM", RewardPoints = 410, MembershipRank = "Vàng" },
+                new Customer { CustomerId = 9, CustomerName = "Đặng Tuấn Kiệt", PhoneNumber = "0922901234", Address = "79 Kinh Dương Vương, Quận Bình Tân, TPHCM", RewardPoints = 95, MembershipRank = "Chuẩn" },
+                new Customer { CustomerId = 10, CustomerName = "Ngô Thanh Vân", PhoneNumber = "0971012345", Address = "18 Hoàng Diệu, Quận 4, TPHCM", RewardPoints = 650, MembershipRank = "Bạch Kim" },
+                new Customer { CustomerId = 11, CustomerName = "Trương Đình Trọng", PhoneNumber = "0982123456", Address = "405 Lê Văn Khương, Quận 12, TPHCM", RewardPoints = 30, MembershipRank = "Chuẩn" },
+                new Customer { CustomerId = 12, CustomerName = "Lý Mỹ Lệ", PhoneNumber = "0904234567", Address = "123 Long Thuận, TP. Thủ Đức, TPHCM", RewardPoints = 180, MembershipRank = "Bạc" },
+                new Customer { CustomerId = 13, CustomerName = "Vũ Đức Thịnh", PhoneNumber = "0915345678", Address = "67 Lũy Bán Bích, Quận Tân Phú, TPHCM", RewardPoints = 290, MembershipRank = "Bạc" },
+                new Customer { CustomerId = 14, CustomerName = "Phan Bích Thủy", PhoneNumber = "0936456789", Address = "142 Phạm Thế Hiển, Quận 8, TPHCM", RewardPoints = 480, MembershipRank = "Vàng" },
+                new Customer { CustomerId = 15, CustomerName = "Dương Gia Huy", PhoneNumber = "0977567890", Address = "89 An Dương Vương, Quận 5, TPHCM", RewardPoints = 0, MembershipRank = "Chuẩn" }
+            );
+
+            // 5. ORDERS (15 hóa đơn)
+            modelBuilder.Entity<Order>().HasData(
+                new Order { OrderId = 1, OrderCode = "HD20261001-001", CreatedDate = new DateTime(2026, 10, 1, 8, 30, 0), CustomerId = 1, CashierUsername = "cashier01", TotalItems = 3, FinalAmount = 57000m, RewardPoints = 5 },
+                new Order { OrderId = 2, OrderCode = "HD20261001-002", CreatedDate = new DateTime(2026, 10, 1, 9, 15, 0), CustomerId = 2, CashierUsername = "cashier01", TotalItems = 2, FinalAmount = 145000m, RewardPoints = 14 },
+                new Order { OrderId = 3, OrderCode = "HD20261001-003", CreatedDate = new DateTime(2026, 10, 1, 10, 0, 0), CustomerId = 3, CashierUsername = "cashier02", TotalItems = 10, FinalAmount = 45000m, RewardPoints = 4 },
+                new Order { OrderId = 4, OrderCode = "HD20261002-001", CreatedDate = new DateTime(2026, 10, 2, 8, 45, 0), CustomerId = 4, CashierUsername = "cashier02", TotalItems = 4, FinalAmount = 138000m, RewardPoints = 13 },
+                new Order { OrderId = 5, OrderCode = "HD20261002-002", CreatedDate = new DateTime(2026, 10, 2, 11, 20, 0), CustomerId = 5, CashierUsername = "cashier03", TotalItems = 2, FinalAmount = 69000m, RewardPoints = 6 },
+                new Order { OrderId = 6, OrderCode = "HD20261003-001", CreatedDate = new DateTime(2026, 10, 3, 14, 10, 0), CustomerId = 6, CashierUsername = "cashier03", TotalItems = 3, FinalAmount = 53500m, RewardPoints = 5 },
+                new Order { OrderId = 7, OrderCode = "HD20261003-002", CreatedDate = new DateTime(2026, 10, 3, 16, 40, 0), CustomerId = 7, CashierUsername = "cashier04", TotalItems = 5, FinalAmount = 30000m, RewardPoints = 3 },
+                new Order { OrderId = 8, OrderCode = "HD20261004-001", CreatedDate = new DateTime(2026, 10, 4, 9, 5, 0), CustomerId = 8, CashierUsername = "cashier04", TotalItems = 2, FinalAmount = 155000m, RewardPoints = 15 },
+                new Order { OrderId = 9, OrderCode = "HD20261004-002", CreatedDate = new DateTime(2026, 10, 4, 13, 30, 0), CustomerId = 9, CashierUsername = "cashier05", TotalItems = 4, FinalAmount = 48500m, RewardPoints = 4 },
+                new Order { OrderId = 10, OrderCode = "HD20261005-001", CreatedDate = new DateTime(2026, 10, 5, 10, 50, 0), CustomerId = 10, CashierUsername = "cashier05", TotalItems = 6, FinalAmount = 168000m, RewardPoints = 16 },
+                new Order { OrderId = 11, OrderCode = "HD20261005-002", CreatedDate = new DateTime(2026, 10, 5, 17, 15, 0), CustomerId = 11, CashierUsername = "cashier06", TotalItems = 8, FinalAmount = 36000m, RewardPoints = 3 },
+                new Order { OrderId = 12, OrderCode = "HD20261006-001", CreatedDate = new DateTime(2026, 10, 6, 8, 20, 0), CustomerId = 12, CashierUsername = "cashier06", TotalItems = 2, FinalAmount = 108000m, RewardPoints = 10 },
+                new Order { OrderId = 13, OrderCode = "HD20261006-002", CreatedDate = new DateTime(2026, 10, 6, 15, 0, 0), CustomerId = 13, CashierUsername = "cashier07", TotalItems = 3, FinalAmount = 78000m, RewardPoints = 7 },
+                new Order { OrderId = 14, OrderCode = "HD20261007-001", CreatedDate = new DateTime(2026, 10, 7, 12, 10, 0), CustomerId = 14, CashierUsername = "cashier07", TotalItems = 1, FinalAmount = 125000m, RewardPoints = 12 },
+                new Order { OrderId = 15, OrderCode = "HD20261007-002", CreatedDate = new DateTime(2026, 10, 7, 18, 45, 0), CustomerId = 15, CashierUsername = "cashier01", TotalItems = 4, FinalAmount = 40000m, RewardPoints = 4 }
+            );
+
+            // 6. ORDERDETAILS (18 dòng chi tiết)
+            modelBuilder.Entity<OrderDetail>().HasData(
+                new OrderDetail { OrderDetailId = 1, OrderId = 1, ProductId = 5, Quantity = 1, UnitPrice = 10000m, LineTotal = 10000m },
+                new OrderDetail { OrderDetailId = 2, OrderId = 1, ProductId = 1, Quantity = 1, UnitPrice = 12500m, LineTotal = 12500m },
+                new OrderDetail { OrderDetailId = 3, OrderId = 1, ProductId = 9, Quantity = 1, UnitPrice = 34500m, LineTotal = 34500m },
+                new OrderDetail { OrderDetailId = 4, OrderId = 2, ProductId = 2, Quantity = 1, UnitPrice = 135000m, LineTotal = 135000m },
+                new OrderDetail { OrderDetailId = 5, OrderId = 2, ProductId = 5, Quantity = 1, UnitPrice = 10000m, LineTotal = 10000m },
+                new OrderDetail { OrderDetailId = 6, OrderId = 3, ProductId = 13, Quantity = 10, UnitPrice = 4500m, LineTotal = 45000m },
+                new OrderDetail { OrderDetailId = 7, OrderId = 4, ProductId = 9, Quantity = 4, UnitPrice = 34500m, LineTotal = 138000m },
+                new OrderDetail { OrderDetailId = 8, OrderId = 5, ProductId = 9, Quantity = 1, UnitPrice = 34500m, LineTotal = 34500m },
+                new OrderDetail { OrderDetailId = 9, OrderId = 5, ProductId = 9, Quantity = 1, UnitPrice = 34500m, LineTotal = 34500m },
+                new OrderDetail { OrderDetailId = 10, OrderId = 6, ProductId = 4, Quantity = 1, UnitPrice = 53500m, LineTotal = 53500m },
+                new OrderDetail { OrderDetailId = 11, OrderId = 7, ProductId = 6, Quantity = 5, UnitPrice = 6000m, LineTotal = 30000m },
+                new OrderDetail { OrderDetailId = 12, OrderId = 8, ProductId = 16, Quantity = 1, UnitPrice = 125000m, LineTotal = 125000m },
+                new OrderDetail { OrderDetailId = 13, OrderId = 8, ProductId = 17, Quantity = 1, UnitPrice = 30000m, LineTotal = 30000m },
+                new OrderDetail { OrderDetailId = 14, OrderId = 9, ProductId = 3, Quantity = 2, UnitPrice = 15000m, LineTotal = 30000m },
+                new OrderDetail { OrderDetailId = 15, OrderId = 9, ProductId = 7, Quantity = 1, UnitPrice = 11000m, LineTotal = 11000m },
+                new OrderDetail { OrderDetailId = 16, OrderId = 10, ProductId = 4, Quantity = 2, UnitPrice = 54000m, LineTotal = 108000m },
+                new OrderDetail { OrderDetailId = 17, OrderId = 10, ProductId = 18, Quantity = 2, UnitPrice = 30000m, LineTotal = 60000m },
+                new OrderDetail { OrderDetailId = 18, OrderId = 14, ProductId = 16, Quantity = 1, UnitPrice = 125000m, LineTotal = 125000m }
             );
 
             // 4. SEED DATA: 30 ROLES (Chức danh & Vai trò Phố Thị)

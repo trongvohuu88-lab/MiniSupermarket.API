@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using MiniSupermarket.API.Data;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
@@ -12,19 +14,22 @@ namespace MiniSupermarket.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IConfiguration _configuration;
+        private readonly SupermarketDbContext _context;
 
-        public AuthController(IConfiguration configuration)
+        public AuthController(IConfiguration configuration, SupermarketDbContext context)
         {
             _configuration = configuration;
+            _context = context;
         }
 
         // Endpoint Đăng nhập: POST /api/auth/login
         [HttpPost("login")]
-        public IActionResult Login([FromBody] LoginRequestDto request)
+        public async Task<IActionResult> Login([FromBody] LoginRequestDto request)
         {
-            // Tra cứu trong kho tài khoản mẫu (15 tài khoản kiểm thử Buổi 4)
-            var user = UserStore.Users.FirstOrDefault(u =>
-                u.Username == request.Username && u.Password == request.Password);
+            // Tra cứu tài khoản trong bảng Users của SQL Server
+            // (Lưu ý học tập: PasswordHash đang là chuỗi seed theo đề; thực tế nên băm bằng BCrypt)
+            var user = await _context.Users.AsNoTracking().FirstOrDefaultAsync(u =>
+                u.Username == request.Username && u.PasswordHash == request.Password);
 
             if (user != null)
             {
