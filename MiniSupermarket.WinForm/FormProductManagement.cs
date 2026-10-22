@@ -18,6 +18,11 @@ namespace MiniSupermarket.WinForms
         public FormProductManagement()
         {
             InitializeComponent();
+
+            // Thiết lập giới hạn ban đầu lớn để tránh lỗi
+            nudStock.Maximum = 1000000;
+            nudPrice.Maximum = 1000000000;
+
             BackColor = Color.FromArgb(244, 245, 247);
             ApplyPermissions();
 
@@ -142,8 +147,14 @@ namespace MiniSupermarket.WinForms
             txtId.Text = p.ProductId.ToString();
             txtBarcode.Text = p.Barcode;
             txtName.Text = p.ProductName;
+
+            // Kiểm tra và nới rộng Maximum động trước khi gán để tuyệt đối không văng lỗi
+            if (p.Price > nudPrice.Maximum) nudPrice.Maximum = p.Price + 10000;
             nudPrice.Value = p.Price;
+
+            if (p.StockQuantity > nudStock.Maximum) nudStock.Maximum = p.StockQuantity + 10000;
             nudStock.Value = p.StockQuantity;
+
             cboCategory.SelectedValue = p.CategoryId;
         }
 
