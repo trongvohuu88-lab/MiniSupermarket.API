@@ -1,210 +1,214 @@
 # 🛒 HỆ THỐNG QUẢN LÝ SIÊU THỊ MINI (MINISUPERMARKET SYSTEM)
 
 **Môn học:** Lập trình Ứng dụng .NET Core (Mã môn: 229162)  
-**Buổi thực hành:** Buổi 5 - ADO.NET nâng cao, Stored Procedure và giao dịch POS Checkout  
+**Buổi thực hành:** Buổi 6 – Entity Framework Core nâng cao, phân trang LINQ và tích hợp hệ thống POS Client - Server
 
----
+## 🏗️ 1. Mô hình kiến trúc hệ thống (Client - Server)
 
-## 🏗️ 1. Mục tiêu thực hành
+Dự án được xây dựng theo mô hình Client - Server, gồm hai project chính:
 
-Buổi thực hành 5 tập trung vào việc làm chủ kỹ thuật truy xuất dữ liệu tối ưu trên SQL Server bằng ADO.NET thuần, xây dựng hệ thống API backend đạt chuẩn ACID phục vụ các nghiệp vụ bán hàng thời gian thực tại quầy POS.
+- **MiniSupermarket.API (Backend):** Sử dụng ASP.NET Core Web API để xử lý nghiệp vụ, truy vấn dữ liệu, quản lý sản phẩm, danh mục, khách hàng, đơn hàng và cung cấp các API cho ứng dụng Client.
+- **MiniSupermarket.WinForm (Frontend Client):** Ứng dụng Windows Forms phục vụ quản lý siêu thị và thao tác tại quầy POS. Client kết nối với Backend thông qua HTTP API để trao đổi dữ liệu.
 
-Các nội dung trọng tâm bao gồm:
+Luồng xử lý chính:
 
-- Thiết lập kết nối và thực thi truy vấn cơ sở dữ liệu SQL Server thông qua ADO.NET.
-- Sử dụng thành thạo các đối tượng cốt lõi: `SqlConnection`, `SqlCommand`, `SqlParameter`, `SqlDataReader` và `DataTable`.
-- Áp dụng chuẩn xác các phương thức thực thi: `ExecuteScalar()`, `ExecuteNonQuery()` và `ExecuteReader()`.
-- Lập trình API tra cứu thông tin sản phẩm siêu tốc theo mã vạch (Barcode Scanner).
-- Ứng dụng `SqlDataAdapter` kết hợp `DataTable` để truy xuất và thao tác dữ liệu theo mô hình ngắt kết nối (Disconnected Mode).
-- Tối ưu hóa hiệu năng truy vấn báo cáo bằng Stored Procedure tổng hợp doanh thu theo từng nhân viên thu ngân.
-- Sử dụng `SqlTransaction` để bảo vệ chuỗi giao dịch bán hàng đa bảng, đảm bảo tính toàn vẹn dữ liệu tuyệt đối khi thanh toán POS.
-
----
+`WinForms Client → HttpClient → ASP.NET Core Web API → Entity Framework Core → SQL Server`
 
 ## 🛠️ 2. Công nghệ sử dụng
 
-- **Ngôn ngữ lập trình:** C#
-- **Nền tảng phát triển:** ASP.NET Core Web API (.NET 8.0) & WinForms Client
-- **Truy xuất dữ liệu nâng cao:** ADO.NET
-- **Thư viện kết nối CSDL:** `Microsoft.Data.SqlClient`
-- **Hệ quản trị CSDL:** Microsoft SQL Server
-- **Công cụ quản lý CSDL:** SQL Server Management Studio (SSMS)
-- **Công cụ kiểm thử & kiểm tra API:** Swagger UI / Postman
-- **Chuẩn trao đổi dữ liệu:** JSON
-
----
+- **Ngôn ngữ:** C#
+- **Nền tảng:** .NET / ASP.NET Core
+- **Backend:** ASP.NET Core Web API, Controllers, DTO, Entity Framework Core.
+- **Truy vấn dữ liệu:** LINQ, Eager Loading (`Include`), `Skip`, `Take`, `AsNoTracking`.
+- **Frontend:** Windows Forms, `HttpClient`, JSON.
+- **Cơ sở dữ liệu:** SQL Server.
+- **Kiểm thử API:** Swagger UI.
+- **Môi trường phát triển:** Visual Studio.
 
 ## 📂 3. Cấu trúc Solution
 
+Cây thư mục dưới đây được tổng hợp theo cấu trúc project hiện tại. Các thư mục có nhiều file nghiệp vụ được trình bày tương đối để README dễ theo dõi.
+
 ```text
-Solution 'MiniSupermarket'
+MiniSupermarket/
 │
-├── MiniSupermarket.API/                 # Backend - ASP.NET Core Web API
+├── MiniSupermarket.API/
 │   │
 │   ├── Controllers/
-│   │   ├── AdoProductController.cs      # ADO.NET: Tra cứu mã vạch & tải Cache sản phẩm
-│   │   ├── CheckoutController.cs        # API xử lý thanh toán POS bằng SqlTransaction
-│   │   ├── ReportsController.cs         # API xuất báo cáo doanh thu qua Stored Procedure
-│   │   ├── ProductsController.cs        # API CRUD quản lý sản phẩm
-│   │   ├── OrdersController.cs          # API quản lý hóa đơn
-│   │   └── ...                          # Các Controller phụ trợ khác
+│   │   ├── AdoProductController.cs
+│   │   ├── AuthController.cs
+│   │   ├── CategoriesController.cs
+│   │   ├── CheckoutController.cs
+│   │   ├── CustomerController.cs
+│   │   ├── OrdersController.cs
+│   │   ├── ProductsController.cs
+│   │   ├── ReportsController.cs
+│   │   ├── RolesController.cs
+│   │   ├── UsersController.cs
+│   │   └── WeatherForecastController.cs
+│   │
+│   ├── Data/
+│   │   └── SupermarketDbContext.cs
+│   │       # Cấu hình truy cập dữ liệu bằng EF Core
 │   │
 │   ├── Dto/
-│   │   ├── ProductLookupDto.cs          # DTO hứng dữ liệu tra cứu sản phẩm
-│   │   ├── CheckoutDtos.cs              # DTO yêu cầu thanh toán POS giỏ hàng
-│   │   ├── CashierRevenueDto.cs         # DTO báo cáo doanh thu theo thu ngân
-│   │   ├── TopSellingProductDto.cs      # DTO thống kê sản phẩm bán chạy
-│   │   └── ...
+│   │   ├── CashierRevenueDto.cs
+│   │   ├── CategoryDtos.cs
+│   │   ├── CheckoutDtos.cs
+│   │   ├── CustomerDtos.cs
+│   │   ├── DashboardSummaryDto.cs
+│   │   ├── ProductDtos.cs
+│   │   ├── ProductLookupDto.cs
+│   │   ├── TopSellingProductDto.cs
+│   │   └── ... các DTO khác
+│   │
+│   ├── Migrations/
+│   │   └── ... các migration của cơ sở dữ liệu
 │   │
 │   ├── Models/
-│   │   ├── Product.cs                   # Entity mô hình sản phẩm
-│   │   ├── Customer.cs                  # Entity mô hình khách hàng
-│   │   ├── Order.cs                     # Entity mô hình hóa đơn
-│   │   ├── OrderDetail.cs               # Entity mô hình chi tiết hóa đơn
-│   │   ├── Category.cs                  # Entity mô hình danh mục
-│   │   └── ...                          # Các Model khác
+│   │   ├── Category.cs
+│   │   ├── Customer.cs
+│   │   ├── Order.cs
+│   │   ├── OrderDetail.cs
+│   │   ├── PagedResponseDto.cs
+│   │   ├── Product.cs
+│   │   ├── Roles.cs
+│   │   └── User.cs
 │   │
-│   ├── Data/                            # DbContext & cấu hình Entity Framework
-│   ├── Migrations/                      # Lịch sử Migration CSDL
-│   ├── appsettings.json                 # Cấu hình chuỗi kết nối (ConnectionString)
-│   ├── Program.cs                       # Đăng ký dịch vụ & Khởi chạy Web API
-│   └── ...
+│   ├── appsettings.json
+│   ├── MiniSupermarket.API.http
+│   ├── Program.cs
+│   └── WeatherForecast.cs
 │
-└── MiniSupermarket.WinForm/             # Frontend - Desktop Client (WinForms)
-    ├── FormPOS.cs                       # Giao diện bán hàng & quét mã vạch POS
-    ├── FormQuickReport.cs               # Giao diện xem báo cáo doanh thu nhanh
-    ├── FormProductManagement.cs         # Giao diện quản lý danh mục & tồn kho sản phẩm
-    ├── FormCustomerManagement.cs        # Giao diện quản lý khách hàng & điểm thưởng
-    ├── FormMainShell.cs                 # Giao diện điều khiển chính (Main Shell)
-    ├── Program.cs                       # Điểm khởi chạy ứng dụng WinForms
-    └── ...                              # Các Form và Control phụ trợ
+└── MiniSupermarket.WinForm/
+    │
+    ├── Services/
+    │   └── ... các lớp dịch vụ kết nối API
+    │
+    ├── Theme/
+    │   └── ... các thành phần giao diện
+    │
+    ├── Form1.cs
+    ├── FormCancelOrder.cs
+    ├── FormCategoryManagement.cs
+    ├── FormCustomerManagement.cs
+    ├── FormLogin.cs
+    ├── FormMainShell.cs
+    ├── FormPOS.cs
+    ├── FormProductManagement.cs
+    ├── FormQuickAddCustomer.cs
+    ├── FormQuickReport.cs
+    ├── FormRoleManagement.cs
+    ├── FormUserManagement.cs
+    ├── Program.cs
+    └── SessionManager.cs
 ```
 
-**Chi tiết vai trò các thành phần chính Buổi 5:**
+### Các file trọng tâm của Buổi 6
 
-- `AdoProductController.cs`: Thực thi truy vấn ADO.NET thuần giúp tối ưu tốc độ đọc dữ liệu trực tiếp từ SQL Server.
-- `ProductLookupDto.cs`: Định nghĩa cấu trúc DTO nhỏ gọn phục vụ quét mã vạch dưới 100ms.
-- `ReportsController.cs`: Gọi Stored Procedure tổng hợp dữ liệu tài chính chính xác.
-- `CashierRevenueDto.cs`: Ánh xạ kết quả doanh thu, tổng đơn hàng và điểm tích lũy theo ca trực của thu ngân.
-- `CheckoutController.cs`: Quản lý quy trình thanh toán bán lẻ đa bảng bọc kín trong `SqlTransaction`.
-- `CheckoutDtos.cs`: Đóng gói danh sách giỏ hàng và thông tin khách hàng từ quầy POS gửi lên API.
+| File | Vai trò |
+|---|---|
+| `ProductsController.cs` | Xử lý API sản phẩm; là nơi triển khai hoặc tích hợp chức năng tìm kiếm, phân trang. |
+| `PagedResponseDto.cs` | Cấu trúc dữ liệu phản hồi phân trang nếu được sử dụng trong phần triển khai. |
+| `Product.cs` | Mô hình dữ liệu sản phẩm. |
+| `Category.cs` | Mô hình danh mục sản phẩm, liên kết với sản phẩm. |
+| `FormProductManagement.cs` | Giao diện quản lý sản phẩm trên WinForms. |
+| `Services/` | Chứa các lớp dịch vụ dùng để kết nối Client với API. |
+| `Program.cs` | Điểm khởi chạy và cấu hình ứng dụng tương ứng với từng project. |
 
----
+*Lưu ý: Cây thư mục phản ánh các tên file nhìn thấy trong Solution Explorer và cấu trúc theo nội dung thực hành. Cần kiểm tra nội dung mã nguồn để xác nhận chính xác các chức năng đã hoàn thành trong từng file.*
 
-## 🔌 4. Nội dung thực hành chi tiết
+## 📌 4. Nội dung thực hành Buổi 6
 
-### 4.1. Kỹ thuật truy xuất dữ liệu với ADO.NET
-Khai thác bộ thư viện `Microsoft.Data.SqlClient` để tương tác trực tiếp với cơ sở dữ liệu:
+### 4.1. Xây dựng API tìm kiếm và phân trang sản phẩm
 
-- **`SqlConnection`:** Khởi tạo và quản lý kênh kết nối vật lý. Luôn bọc trong khối `using` để tự động giải phóng tài nguyên kết nối (`Connection Pooling`).
-- **`SqlCommand`:** Đóng gói câu lệnh T-SQL hoặc tên Stored Procedure truyền xuống SQL Server.
-- **`SqlParameter`:** Truyền tham số hóa dữ liệu vào câu lệnh SQL, đảm bảo an toàn tuyệt đối và triệt tiêu nguy cơ tấn công **SQL Injection**.
-- **`SqlDataReader`:** Đọc dữ liệu dạng luồng một chiều (Forward-Only) đạt hiệu năng cao, thích hợp cho các tác vụ đọc nhanh.
-- **`DataTable` & `SqlDataAdapter`:** Nạp toàn bộ dữ liệu vào bộ nhớ RAM ở mô hình ngắt kết nối (Disconnected Mode), hỗ trợ lưu đệm dữ liệu.
-- **Phân định rõ phương thức thực thi:**
-  - `ExecuteScalar()`: Dùng khi truy vấn trả về 1 ô duy nhất (ví dụ: lấy `OrderId` vừa tạo bằng `OUTPUT INSERTED.OrderId`).
-  - `ExecuteNonQuery()`: Dùng khi thực thi lệnh `INSERT`, `UPDATE`, `DELETE` (trả về số dòng bị tác động).
-  - `ExecuteReader()`: Dùng khi đọc tập dữ liệu gồm nhiều dòng, nhiều cột.
+Tổ chức truy vấn sản phẩm tại Backend nhằm tránh trả về toàn bộ dữ liệu khi danh sách hàng hóa lớn.
 
----
+Các nội dung trọng tâm:
 
-### 4.2. API tra cứu mã vạch siêu tốc (Connected & Disconnected Mode)
-**File xử lý:** `AdoProductController.cs`
+- Tiếp nhận từ khóa tìm kiếm, số trang và kích thước trang.
+- Sử dụng LINQ để lọc dữ liệu theo tên sản phẩm hoặc mã vạch.
+- Sử dụng `Skip()` và `Take()` để lấy dữ liệu của trang hiện tại.
+- Sử dụng `CountAsync()` để xác định tổng số bản ghi phù hợp.
+- Tính tổng số trang và trả về dữ liệu kèm thông tin phân trang.
 
-Xây dựng bộ API hỗ trợ quầy tính tiền POS quét mã Barcode phản hồi tức thì:
+Endpoint theo nội dung bài thực hành:
 
-- **Endpoint tra cứu Barcode (`GET /api/ado-products/barcode/{barcode}`):** 
-  - Sử dụng `SqlDataReader` đọc nhanh đúng 1 dòng dữ liệu sản phẩm theo mã vạch.
-  - Sử dụng `@Barcode` qua `SqlParameter` để lọc dữ liệu an toàn.
-  - Phản hồi dữ liệu dạng JSON cho WinForms hiển thị lên giỏ hàng.
-  - Trả về mã lỗi `404 Not Found` nếu mã vạch không tồn tại hoặc `400 Bad Request` nếu chuỗi mã vạch trống.
-- **Endpoint tải danh sách ngắt kết nối (`GET /api/ado-products/disconnected-cache`):**
-  - Sử dụng `SqlDataAdapter.Fill()` đổ dữ liệu danh sách sản phẩm vào `DataTable`.
-  - Tự động đóng kết nối ngay sau khi nạp xong, giúp giải phóng bộ nhớ cho máy chủ CSDL.
+```http
+GET /api/products/paged?keyword=&pageNumber=1&pageSize=5
+```
 
----
+### 4.2. Truy vấn dữ liệu với Entity Framework Core
 
-### 4.3. API báo cáo doanh thu bằng Stored Procedure
-**File xử lý:** `ReportsController.cs`
+- Sử dụng `Include()` để lấy thông tin danh mục liên quan đến sản phẩm.
+- Sử dụng `AsNoTracking()` cho các truy vấn chỉ đọc nhằm giảm chi phí theo dõi thay đổi dữ liệu.
+- Kết hợp điều kiện lọc, sắp xếp và phân trang trong truy vấn LINQ.
+- Sử dụng SQL Server làm nơi lưu trữ dữ liệu của hệ thống.
 
-Tối ưu hóa tốc độ tính toán báo cáo tài chính bằng cách chuyển các truy vấn gom nhóm phức tạp xuống CSDL:
+### 4.3. Tích hợp WinForms Client với Web API
 
-- **Xây dựng Stored Procedure `sp_GetRevenueByCashier` trên SQL Server:**
-  - Thống kê tổng số đơn hàng bằng `COUNT(OrderId)`.
-  - Tính tổng doanh thu thực tế bằng `SUM(FinalAmount)`.
-  - Tính tổng điểm thưởng đã phát hành bằng `SUM(RewardPoints)`.
-  - Gom nhóm dữ liệu theo `CashierUsername` (`GROUP BY`) và sắp xếp giảm dần theo doanh thu (`ORDER BY TotalRevenue DESC`).
-- **Thực thi trên C#:**
-  - Thiết lập `command.CommandType = CommandType.StoredProcedure;`.
-  - Ánh xạ từng dòng dữ liệu từ `SqlDataReader` sang danh sách `CashierRevenueDto` (có xử lý an toàn các giá trị `DBNull.Value`).
-  - Trả về kết quả tổng quan kèm danh sách chi tiết dưới dạng JSON.
+Tập trung vào màn hình `FormProductManagement.cs` và lớp dịch vụ trong thư mục `Services`.
 
----
+Các chức năng theo nội dung bài thực hành:
 
-### 4.4. API thanh toán POS Checkout & Bảo vệ bằng SqlTransaction
-**File xử lý:** `CheckoutController.cs`
+- Gọi API để tải danh sách sản phẩm.
+- Hiển thị dữ liệu sản phẩm trên `DataGridView`.
+- Tải danh mục sản phẩm lên `ComboBox`.
+- Tìm kiếm sản phẩm theo từ khóa.
+- Điều hướng giữa các trang dữ liệu.
+- Gửi yêu cầu thêm, sửa và xóa sản phẩm thông qua API.
+- Sử dụng `HttpClient` và JSON để trao đổi dữ liệu giữa Client và Server.
 
-Xây dựng quy trình thanh toán đơn hàng khép kín gồm 4 bước liên hoàn:
+### 4.4. Kiểm thử API
 
-1. **Bước 1 (Tạo Hóa đơn):** Thêm mới bản ghi vào bảng `Orders`, dùng mệnh đề `OUTPUT INSERTED.OrderId` kết hợp `ExecuteScalar()` để lấy `OrderId` tự tăng ngay lập tức.
-2. **Bước 2 (Lưu Chi tiết & Trừ kho):** Lặp qua danh sách giỏ hàng `Items`, kiểm tra tồn kho thực tế trong bảng `Products`. Nếu đủ số lượng, tiến hành thêm bản ghi vào `OrderDetails` và trừ `StockQuantity` trong `Products`.
-3. **Bước 3 (Tích điểm thưởng):** Tính toán điểm tích lũy (10.000 VNĐ = 1 điểm) và cộng vào bảng `Customers`.
-4. **Bước 4 (Xác nhận/Hoàn tác Giao dịch):**
-   - Gọi `transaction.Commit()` để lưu vĩnh viễn toàn bộ dữ liệu vào đĩa cứng khi tất cả các bước thành công.
-   - Kích hoạt `transaction.Rollback()` trong khối `catch` để hủy bỏ và khôi phục sạch dữ liệu khi xảy ra bất kỳ ngoại lệ nào (ví dụ: mua vượt quá số lượng tồn kho).
+Sử dụng Swagger UI để kiểm tra endpoint phân trang sản phẩm và đối chiếu cấu trúc dữ liệu phản hồi.
 
----
+Các thông tin cần kiểm tra:
 
-### 4.5. Đảm bảo tính toàn vẹn dữ liệu chuẩn ACID
-Đảm bảo quy trình thanh toán đáp ứng 4 tiêu chí chuẩn của hệ quản trị CSDL giao dịch:
+- Trang hiện tại (`CurrentPage`).
+- Số phần tử mỗi trang (`PageSize`).
+- Tổng số sản phẩm phù hợp (`TotalItems`).
+- Tổng số trang (`TotalPages`).
+- Danh sách sản phẩm (`Items`).
+- Thông tin danh mục đi kèm sản phẩm khi truy vấn.
 
-- **Atomicity (Tính nguyên tử):** Hoặc tất cả 4 bước thanh toán cùng thành công, hoặc không có bất kỳ dòng dữ liệu rác nào được lưu lại nếu gặp sự cố.
-- **Consistency (Tính nhất quán):** Số lượng tồn kho và tiền thanh toán luôn đảm bảo đúng theo quy tắc nghiệp vụ trước và sau giao dịch.
-- **Isolation (Tính cô lập):** Nhiều quầy POS thanh toán đồng thời không gây tranh chấp hoặc đọc dữ liệu chưa chốt (`Dirty Read`).
-- **Durability (Tính bền vững):** Dữ liệu sau khi `Commit()` thành công sẽ lưu vĩnh viễn trên SQL Server.
+Với bộ dữ liệu mẫu gồm 15 sản phẩm, nếu không lọc dữ liệu và sử dụng `pageSize=5`, kết quả dự kiến là 5 sản phẩm mỗi trang và 3 trang dữ liệu.
 
----
+## 🚀 5. Hướng dẫn chạy dự án
 
-## 🧪 5. Hướng dẫn chạy và kiểm thử API
+### Bước 1: Mở Solution
 
-### Bước 1: Khởi chạy ứng dụng Backend Web API
+Mở file Solution `MiniSupermarket` bằng Visual Studio.
 
-1. Mở Solution `MiniSupermarket.sln` bằng Visual Studio 2022.
-2. Đặt `MiniSupermarket.API` làm **Startup Project**.
-3. Kiểm tra chuỗi `DefaultConnection` trong file `appsettings.json` đảm bảo trỏ đúng đến SQL Server.
-4. Nhấn `F5` hoặc `Ctrl + F5` để khởi chạy. Trang Swagger UI sẽ tự động mở ra.
+### Bước 2: Cấu hình cơ sở dữ liệu
 
----
+Kiểm tra chuỗi kết nối trong `appsettings.json`, bảo đảm phù hợp với SQL Server đang sử dụng.
 
-### Bước 2: Kiểm thử Tra cứu mã vạch
-- **Endpoint:** `GET /api/ado-products/barcode/{barcode}`
-- **Thử nghiệm:** Nhập mã vạch `893456789001` và bấm **Execute**.
-- **Kết quả:** Trả về mã HTTP `200 OK` kèm thông tin tên sản phẩm, đơn giá và số lượng tồn kho. Nhập mã sai `999999999999` sẽ nhận mã `404 Not Found`.
+Nếu cần, kiểm tra các migration và cập nhật cơ sở dữ liệu theo cấu hình của dự án.
 
----
+### Bước 3: Chạy Backend API
 
-### Bước 3: Kiểm thử Tải dữ liệu lưu đệm (Disconnected Mode)
-- **Endpoint:** `GET /api/ado-products/disconnected-cache`
-- **Kết quả:** Trả về mã HTTP `200 OK` kèm tổng số bản ghi và mảng dữ liệu sản phẩm được nạp từ `DataTable`.
+1. Chọn project `MiniSupermarket.API` làm Startup Project.
+2. Chạy ứng dụng bằng F5 hoặc Ctrl + F5.
+3. Mở Swagger UI để kiểm tra các endpoint được cung cấp.
+4. Ghi nhận địa chỉ và cổng HTTP/HTTPS mà API đang sử dụng.
 
----
+### Bước 4: Kết nối và chạy WinForms Client
 
-### Bước 4: Kiểm thử Báo cáo doanh thu theo thu ngân
-- **Đảm bảo:** Đã thực thi lệnh `CREATE PROCEDURE sp_GetRevenueByCashier` trên SSMS trong database `MiniSupermarketDb`.
-- **Endpoint:** `GET /api/reports/revenue-by-cashier`
-- **Kết quả:** Trả về mã HTTP `200 OK` chứa tổng doanh thu toàn siêu thị và danh sách doanh thu phân theo từng tài khoản `CashierUsername`.
+1. Kiểm tra địa chỉ API trong lớp dịch vụ thuộc thư mục `Services`.
+2. Bảo đảm địa chỉ và cổng kết nối khớp với Backend đang chạy.
+3. Chạy project `MiniSupermarket.WinForm`.
+4. Kiểm tra các màn hình quản lý và chức năng gọi API tương ứng.
 
----
+*Lưu ý: Tên project, chuỗi kết nối và cổng chạy cần được đối chiếu với cấu hình thực tế trên máy.*
 
-### Bước 5: Kiểm thử Thanh toán POS Checkout & Cơ chế Rollback
-- **Endpoint:** `POST /api/checkout`
-- **Kịch bản 1 (Thanh toán hợp lệ):** Gửi JSON giỏ hàng với số lượng nhỏ hơn tồn kho $\rightarrow$ Nhận phản hồi `200 OK`, kiểm tra SSMS thấy tạo hóa đơn mới, trừ tồn kho và cộng điểm thưởng thành công.
-- **Kịch bản 2 (Mua vượt quá tồn kho - Kích hoạt Rollback):** Gửi JSON với số lượng mua `999` cho sản phẩm chỉ còn tồn `40` $\rightarrow$ Nhận mã lỗi `400 Bad Request` thông báo *"Sản phẩm không đủ tồn kho!"*. Kiểm tra SSMS xác nhận không sinh ra hóa đơn rác và sản phẩm đứng trước trong giỏ hàng không bị trừ kho sai.
+## 👨‍💻 6. Thông tin sinh viên
 
----
-
-## 👨‍💻 6. Thông tin sinh viên thực hiện
-
-- **Họ và tên sinh viên:** VÕ HỮU TRỌNG
-- **Mã số sinh viên:** 2124110250
+- **Họ tên sinh viên:** Võ Hữu Trọng
+- **Mã sinh viên:** 2124110250
 - **Lớp học phần:** CCQ2411D
+
+---
+
+**MiniSupermarket System**  
+Bài thực hành môn Lập trình Ứng dụng .NET Core – Buổi 6.
