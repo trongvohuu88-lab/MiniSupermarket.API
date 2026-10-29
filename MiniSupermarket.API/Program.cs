@@ -10,8 +10,12 @@ var builder = WebApplication.CreateBuilder(args);
 
 // 2. Lấy Connection String và JWT Secret từ Configuration
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-var jwtSecret = builder.Configuration["JwtSettings:Secret"]
-                ?? "SupermarketSecretKeyDoAnMonHoc2026SecureString!!";
+var jwtSecret = builder.Configuration["JwtSettings:Secret"];
+if (string.IsNullOrWhiteSpace(jwtSecret) || jwtSecret.Length < 32)
+{
+    throw new InvalidOperationException(
+        "Thiếu JwtSettings:Secret hoặc secret quá ngắn. Hãy cấu hình bằng User Secrets hoặc biến môi trường.");
+}
 
 // 3. Đăng ký DbContext với SQL Server
 builder.Services.AddDbContext<SupermarketDbContext>(options =>

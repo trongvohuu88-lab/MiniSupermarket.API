@@ -137,7 +137,7 @@
             lblCustomerName.Name = "lblCustomerName";
             lblCustomerName.Size = new Size(84, 15);
             lblCustomerName.TabIndex = 2;
-            lblCustomerName.Text = "Khách vãng lai";
+            lblCustomerName.Text = "Chưa chọn khách hàng";
             // 
             // lblTotalTitle
             // 

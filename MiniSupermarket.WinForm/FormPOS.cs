@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel;
 using System.Net.Http.Json;
+using System.Text.Json;
 using MiniSupermarket.Client;
 
 namespace MiniSupermarket.WinForms
@@ -7,6 +8,8 @@ namespace MiniSupermarket.WinForms
     public partial class FormPOS : Form
     {
         private readonly BindingList<CartItem> _cart = new();
+        private int? _selectedCustomerId;
+        private string? _selectedCustomerPhone;
 
         public FormPOS()
         {
@@ -37,10 +40,19 @@ namespace MiniSupermarket.WinForms
                 await AddByBarcodeAsync(code);
             };
             txtCustomerPhone.KeyDown += async (_, e) => { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; await LookupCustomerAsync(); } };
+            txtCustomerPhone.TextChanged += (_, _) =>
+            {
+                if (_selectedCustomerId != null && !string.Equals(txtCustomerPhone.Text.Trim(), _selectedCustomerPhone, StringComparison.Ordinal))
+                {
+                    _selectedCustomerId = null;
+                    _selectedCustomerPhone = null;
+                    lblCustomerName.Text = "Chưa xác định khách hàng";
+                }
+            };
             txtCashReceived.TextChanged += (_, _) => CalculateChange();
-            btnCheckout.Click += (_, _) => Checkout();
+            btnCheckout.Click += async (_, _) => await CheckoutAsync();
             btnClearCart.Click += (_, _) => ClearAll();
-            KeyDown += (_, e) => { if (e.KeyCode == Keys.F9) Checkout(); };
+            KeyDown += async (_, e) => { if (e.KeyCode == Keys.F9) { e.Handled = true; e.SuppressKeyPress = true; await CheckoutAsync(); } };
             Shown += (_, _) => txtBarcode.Focus();
         }
 
@@ -83,14 +95,33 @@ namespace MiniSupermarket.WinForms
         private async Task LookupCustomerAsync()
         {
             string phone = txtCustomerPhone.Text.Trim();
-            if (phone.Length == 0) { lblCustomerName.Text = "Khách vãng lai"; return; }
+            _selectedCustomerId = null;
+            _selectedCustomerPhone = null;
+            if (phone.Length == 0)
+            {
+                lblCustomerName.Text = "Chưa chọn khách hàng";
+                return;
+            }
+
             try
             {
                 var all = await ApiClientService.Client.GetFromJsonAsync<List<Customer>>("customers") ?? new();
-                var c = all.FirstOrDefault(x => x.PhoneNumber == phone);
-                lblCustomerName.Text = c == null ? "Không tìm thấy khách hàng" : $"{c.CustomerName} - Hạng {c.MembershipRank} ({c.RewardPoints} điểm)";
+                var customer = all.FirstOrDefault(x => string.Equals(x.PhoneNumber?.Trim(), phone, StringComparison.Ordinal));
+                if (customer == null)
+                {
+                    lblCustomerName.Text = "Không tìm thấy khách hàng";
+                    return;
+                }
+
+                _selectedCustomerId = customer.CustomerId;
+                _selectedCustomerPhone = phone;
+                lblCustomerName.Text = $"{customer.CustomerName} - Hạng {customer.MembershipRank} ({customer.RewardPoints} điểm)";
             }
-            catch (Exception ex) { MessageBox.Show("Lỗi tra cứu khách hàng: " + ex.Message, "Lỗi"); }
+            catch (Exception ex)
+            {
+                lblCustomerName.Text = "Chưa xác định khách hàng";
+                MessageBox.Show("Lỗi tra cứu khách hàng: " + ex.Message, "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void UpdateTotals()
@@ -111,25 +142,119 @@ namespace MiniSupermarket.WinForms
             else lblChange.Text = "0 đ";
         }
 
-        private void Checkout()
+        private async Task CheckoutAsync()
         {
-            if (_cart.Count == 0) { MessageBox.Show("Giỏ hàng đang trống!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning); return; }
-            decimal total = _cart.Sum(x => x.TotalPrice);
-            if (!decimal.TryParse(txtCashReceived.Text, out var cash) || cash < total)
+            if (_cart.Count == 0)
             {
-                MessageBox.Show("Tiền khách đưa chưa đủ!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Giỏ hàng đang trống!", "Thông báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            MessageBox.Show($"Thanh toán thành công!\nTổng: {total:N0} đ | Tiền thừa: {cash - total:N0} đ", "Thành công",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
-            ClearAll();
+            // API yêu cầu CustomerId hợp lệ vì Orders.CustomerId là khóa ngoại bắt buộc.
+            // Tra cứu lại nếu thu ngân chưa nhấn Enter sau khi nhập số điện thoại.
+            if (_selectedCustomerId == null)
+                await LookupCustomerAsync();
+
+            if (_selectedCustomerId == null)
+            {
+                MessageBox.Show("Vui lòng nhập số điện thoại của khách hàng đã đăng ký và nhấn Enter để xác nhận trước khi thanh toán.",
+                    "Chưa chọn khách hàng", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtCustomerPhone.Focus();
+                return;
+            }
+
+            decimal total = _cart.Sum(x => x.TotalPrice);
+            if (!decimal.TryParse(txtCashReceived.Text, out var cash) || cash < total)
+            {
+                MessageBox.Show("Tiền khách đưa chưa đủ hoặc không hợp lệ!", "Cảnh báo", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtCashReceived.Focus();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(SessionManager.CurrentUsername))
+            {
+                MessageBox.Show("Không xác định được tài khoản thu ngân. Vui lòng đăng nhập lại.", "Lỗi phiên đăng nhập",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            btnCheckout.Enabled = false;
+            try
+            {
+                var request = new CheckoutRequest
+                {
+                    CashierUsername = SessionManager.CurrentUsername,
+                    CustomerId = _selectedCustomerId.Value,
+                    Items = _cart.Select(item => new CheckoutItemRequest
+                    {
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.UnitPrice
+                    }).ToList()
+                };
+
+                using var response = await ApiClientService.Client.PostAsJsonAsync("checkout", request);
+                string responseText = await response.Content.ReadAsStringAsync();
+                using var json = string.IsNullOrWhiteSpace(responseText) ? null : JsonDocument.Parse(responseText);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    string message = $"Thanh toán thất bại (HTTP {(int)response.StatusCode}).";
+                    if (json != null && json.RootElement.TryGetProperty("message", out var msg))
+                        message = msg.GetString() ?? message;
+                    MessageBox.Show(message, "Không thể thanh toán", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                string orderCode = "(không có mã hóa đơn)";
+                if (json != null && json.RootElement.TryGetProperty("orderCode", out var code))
+                    orderCode = code.GetString() ?? orderCode;
+
+                decimal serverTotal = total;
+                if (json != null && json.RootElement.TryGetProperty("finalAmount", out var amount)
+                    && amount.TryGetDecimal(out var parsedAmount))
+                    serverTotal = parsedAmount;
+
+                int rewardPoints = 0;
+                if (json != null && json.RootElement.TryGetProperty("rewardPointsAdded", out var points)
+                    && points.TryGetInt32(out var parsedPoints))
+                    rewardPoints = parsedPoints;
+
+                MessageBox.Show($"Thanh toán đã được máy chủ ghi nhận.\nMã hóa đơn: {orderCode}\nTổng tiền: {serverTotal:N0} đ\nTiền thừa: {cash - serverTotal:N0} đ\nĐiểm tích lũy: {rewardPoints}",
+                    "Thanh toán thành công", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ClearAll();
+            }
+            catch (HttpRequestException ex)
+            {
+                MessageBox.Show("Không kết nối được API thanh toán. Giao dịch chưa được xác nhận: " + ex.Message,
+                    "Lỗi kết nối", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (JsonException ex)
+            {
+                MessageBox.Show("Máy chủ trả về dữ liệu không hợp lệ: " + ex.Message,
+                    "Lỗi phản hồi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Không thể hoàn tất thanh toán: " + ex.Message,
+                    "Lỗi", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                btnCheckout.Enabled = true;
+            }
         }
 
         private void ClearAll()
         {
-            _cart.Clear(); txtCashReceived.Clear(); txtCustomerPhone.Clear();
-            lblCustomerName.Text = "Khách vãng lai"; UpdateTotals(); txtBarcode.Focus();
+            _cart.Clear();
+            txtCashReceived.Clear();
+            txtCustomerPhone.Clear();
+            _selectedCustomerId = null;
+            _selectedCustomerPhone = null;
+            lblCustomerName.Text = "Chưa chọn khách hàng";
+            UpdateTotals();
+            txtBarcode.Focus();
         }
 
         private void FormPOS_Load(object sender, EventArgs e)
@@ -141,6 +266,20 @@ namespace MiniSupermarket.WinForms
         {
 
         }
+    }
+
+    public sealed class CheckoutRequest
+    {
+        public string CashierUsername { get; set; } = string.Empty;
+        public int CustomerId { get; set; }
+        public List<CheckoutItemRequest> Items { get; set; } = new();
+    }
+
+    public sealed class CheckoutItemRequest
+    {
+        public int ProductId { get; set; }
+        public int Quantity { get; set; }
+        public decimal UnitPrice { get; set; }
     }
 
     public class CartItem

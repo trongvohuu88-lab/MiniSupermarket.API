@@ -2,6 +2,7 @@
  * Mo ta: API Thanh toan POS da bang duoc bao ve boi SqlTransaction (ACID)
  */
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.Data.SqlClient;
 using MiniSupermarket.API.Models;
 
@@ -9,6 +10,7 @@ namespace MiniSupermarket.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize(Roles = "Admin,Cashier")]
     public class CheckoutController : ControllerBase
     {
         private readonly IConfiguration _configuration;
@@ -32,9 +34,27 @@ namespace MiniSupermarket.API.Controllers
                 return BadRequest(new { message = "Giỏ hàng rỗng, không thể tiến hành thanh toán!" });
             }
 
-            if (string.IsNullOrWhiteSpace(request.CashierUsername))
+            // Dùng tài khoản từ JWT đã xác thực để ghi nhận thu ngân, không tin tên do client tự gửi.
+            var authenticatedUsername = User.Identity?.Name;
+            if (string.IsNullOrWhiteSpace(authenticatedUsername))
             {
-                return BadRequest(new { message = "Thiếu thông tin tài khoản thu ngân lập hóa đơn!" });
+                return Unauthorized(new { message = "Không xác định được tài khoản thu ngân từ phiên đăng nhập." });
+            }
+            request.CashierUsername = authenticatedUsername;
+
+            if (request.CustomerId <= 0)
+            {
+                return BadRequest(new { message = "Mã khách hàng không hợp lệ!" });
+            }
+
+            if (request.Items.Any(i => i.ProductId <= 0 || i.Quantity <= 0 || i.UnitPrice < 0))
+            {
+                return BadRequest(new { message = "Sản phẩm, số lượng hoặc đơn giá trong giỏ hàng không hợp lệ!" });
+            }
+
+            if (request.Items.GroupBy(i => i.ProductId).Any(g => g.Count() > 1))
+            {
+                return BadRequest(new { message = "Giỏ hàng có sản phẩm bị lặp. Vui lòng gộp số lượng trước khi thanh toán!" });
             }
 
             string connectionString = _configuration.GetConnectionString("DefaultConnection")!;
@@ -88,9 +108,10 @@ namespace MiniSupermarket.API.Controllers
                     foreach (var item in request.Items)
                     {
                         // 3.1. Kiem tra so luong ton kho thuc te truoc khi tru
-                        string checkStockSql = "SELECT StockQuantity, ProductName FROM Products WHERE ProductId = @ProductId";
+                        string checkStockSql = "SELECT StockQuantity, ProductName, Price FROM Products WHERE ProductId = @ProductId";
                         int currentStock = 0;
                         string productName = string.Empty;
+                        decimal currentPrice = 0m;
 
                         using (SqlCommand cmdCheck = new SqlCommand(checkStockSql, connection, transaction))
                         {
@@ -104,6 +125,7 @@ namespace MiniSupermarket.API.Controllers
                                 }
                                 currentStock = Convert.ToInt32(reader["StockQuantity"]);
                                 productName = reader["ProductName"].ToString() ?? string.Empty;
+                                currentPrice = Convert.ToDecimal(reader["Price"]);
                             }
                         }
 
@@ -113,6 +135,13 @@ namespace MiniSupermarket.API.Controllers
                             throw new InvalidOperationException(
                                 $"Sản phẩm '{productName}' (ID: {item.ProductId}) không đủ tồn kho! " +
                                 $"(Tồn kho thực tế: {currentStock}, Số lượng yêu cầu mua: {item.Quantity})");
+                        }
+
+                        // Không tin đơn giá do client gửi lên; đối chiếu với giá hiện hành trong CSDL.
+                        if (item.UnitPrice != currentPrice)
+                        {
+                            throw new InvalidOperationException(
+                                $"Đơn giá sản phẩm '{productName}' đã thay đổi. Vui lòng tải lại giỏ hàng và thử lại.");
                         }
 
                         // 3.3. Them dong chi tiet vao bang OrderDetails

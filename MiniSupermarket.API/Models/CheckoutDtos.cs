@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Mo ta: Cac lop DTO phuc vu nghiep vu thanh toan gio hang POS
  */
 namespace MiniSupermarket.API.Models
@@ -17,7 +17,7 @@ namespace MiniSupermarket.API.Models
         // Tai khoan thu ngan dang dung ca truc
         public string CashierUsername { get; set; } = string.Empty;
 
-        // Ma dinh danh khach hang (neu la khach vang lai, truyen CustomerId = 15)
+        // Ma dinh danh cua khach hang da ton tai trong bang Customers
         public int CustomerId { get; set; }
 
         // Danh sach cac mon hang can thanh toan
