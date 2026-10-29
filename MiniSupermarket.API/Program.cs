@@ -60,12 +60,21 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
+// 6. Cấu hình CORS để client (WinForms/trình duyệt) gọi được vào API
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowWinForms", policy =>
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod());
+});
+
 builder.Services.AddControllers();
 
-// 6. Build ứng dụng
+// 7. Build ứng dụng
 var app = builder.Build();
 
-// 7. Cấu hình HTTP Request Pipeline (Middleware)
+// 8. Cấu hình HTTP Request Pipeline (Middleware)
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -73,6 +82,9 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// CORS phải đặt trước Authentication/Authorization
+app.UseCors("AllowWinForms");
 
 // Thứ tự Middleware bắt buộc: Authentication TRƯỚC, Authorization SAU
 app.UseAuthentication();

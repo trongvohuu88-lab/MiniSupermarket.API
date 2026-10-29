@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using MiniSupermarket.API.Data;
+using MiniSupermarket.API.Data; // Đã sửa đúng namespace
 using MiniSupermarket.API.Models;
 
 namespace MiniSupermarket.API.Controllers
@@ -9,15 +9,10 @@ namespace MiniSupermarket.API.Controllers
     [Route("api/[controller]")]
     [ApiController]
     [Authorize(Roles = "Admin")] // Chỉ Admin quản trị tài khoản
-    public class UsersController : ControllerBase
+    public class UsersController(SupermarketDbContext context) : ControllerBase
     {
         private static readonly string[] ValidRoles = { "Admin", "Cashier", "Warehouse" };
-        private readonly SupermarketDbContext _context;
-
-        public UsersController(SupermarketDbContext context)
-        {
-            _context = context;
-        }
+        private readonly SupermarketDbContext _context = context;
 
         // GET: api/users  (giữ nguyên dạng JSON { Id, Username, FullName, Role, IsActive } cho WinForm)
         [HttpGet]

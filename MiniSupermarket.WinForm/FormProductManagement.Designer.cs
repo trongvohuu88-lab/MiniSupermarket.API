@@ -33,19 +33,15 @@
             lblBarcode = new Label();
             txtId = new TextBox();
             lblId = new Label();
-
             panelSearch = new Panel();
             btnSearch = new Button();
             txtSearch = new TextBox();
             lblSearch = new Label();
-
             dgvProducts = new DataGridView();
-
             panelPaging = new Panel();
             btnNext = new Button();
             lblPaging = new Label();
             btnPrev = new Button();
-
             panelInputs.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)nudStock).BeginInit();
             ((System.ComponentModel.ISupportInitialize)nudPrice).BeginInit();
@@ -114,9 +110,8 @@
             // nudStock
             // 
             nudStock.Location = new Point(380, 42);
-            Maximum = new decimal(new int[] { 1000000, 0, 0, 0 });
             nudStock.Name = "nudStock";
-            nudStock.Size = new Size(150, 23);
+            nudStock.Size = new Size(150, 31);
             nudStock.TabIndex = 11;
             // 
             // lblStock
@@ -124,7 +119,7 @@
             lblStock.AutoSize = true;
             lblStock.Location = new Point(310, 44);
             lblStock.Name = "lblStock";
-            lblStock.Size = new Size(64, 15);
+            lblStock.Size = new Size(94, 25);
             lblStock.TabIndex = 10;
             lblStock.Text = "TỒN KHO:";
             // 
@@ -133,7 +128,7 @@
             nudPrice.Location = new Point(85, 42);
             nudPrice.Maximum = new decimal(new int[] { 1000000000, 0, 0, 0 });
             nudPrice.Name = "nudPrice";
-            nudPrice.Size = new Size(200, 23);
+            nudPrice.Size = new Size(200, 31);
             nudPrice.TabIndex = 9;
             nudPrice.ThousandsSeparator = true;
             // 
@@ -142,7 +137,7 @@
             lblPrice.AutoSize = true;
             lblPrice.Location = new Point(12, 44);
             lblPrice.Name = "lblPrice";
-            lblPrice.Size = new Size(58, 15);
+            lblPrice.Size = new Size(85, 25);
             lblPrice.TabIndex = 8;
             lblPrice.Text = "GIÁ BÁN:";
             // 
@@ -152,7 +147,7 @@
             cboCategory.FormattingEnabled = true;
             cboCategory.Location = new Point(740, 10);
             cboCategory.Name = "cboCategory";
-            cboCategory.Size = new Size(210, 23);
+            cboCategory.Size = new Size(210, 33);
             cboCategory.TabIndex = 7;
             // 
             // lblCategory
@@ -160,7 +155,7 @@
             lblCategory.AutoSize = true;
             lblCategory.Location = new Point(680, 13);
             lblCategory.Name = "lblCategory";
-            lblCategory.Size = new Size(47, 15);
+            lblCategory.Size = new Size(72, 25);
             lblCategory.TabIndex = 6;
             lblCategory.Text = "NHÓM:";
             // 
@@ -168,7 +163,7 @@
             // 
             txtName.Location = new Point(410, 10);
             txtName.Name = "txtName";
-            txtName.Size = new Size(250, 23);
+            txtName.Size = new Size(250, 31);
             txtName.TabIndex = 5;
             // 
             // lblName
@@ -176,7 +171,7 @@
             lblName.AutoSize = true;
             lblName.Location = new Point(350, 13);
             lblName.Name = "lblName";
-            lblName.Size = new Size(48, 15);
+            lblName.Size = new Size(72, 25);
             lblName.TabIndex = 4;
             lblName.Text = "TÊN SP:";
             // 
@@ -184,7 +179,7 @@
             // 
             txtBarcode.Location = new Point(180, 10);
             txtBarcode.Name = "txtBarcode";
-            txtBarcode.Size = new Size(150, 23);
+            txtBarcode.Size = new Size(150, 31);
             txtBarcode.TabIndex = 3;
             // 
             // lblBarcode
@@ -192,7 +187,7 @@
             lblBarcode.AutoSize = true;
             lblBarcode.Location = new Point(105, 13);
             lblBarcode.Name = "lblBarcode";
-            lblBarcode.Size = new Size(65, 15);
+            lblBarcode.Size = new Size(96, 25);
             lblBarcode.TabIndex = 2;
             lblBarcode.Text = "MÃ VẠCH:";
             // 
@@ -201,7 +196,7 @@
             txtId.Location = new Point(45, 10);
             txtId.Name = "txtId";
             txtId.ReadOnly = true;
-            txtId.Size = new Size(50, 23);
+            txtId.Size = new Size(50, 31);
             txtId.TabIndex = 1;
             // 
             // lblId
@@ -209,7 +204,7 @@
             lblId.AutoSize = true;
             lblId.Location = new Point(12, 13);
             lblId.Name = "lblId";
-            lblId.Size = new Size(21, 15);
+            lblId.Size = new Size(34, 25);
             lblId.TabIndex = 0;
             lblId.Text = "ID:";
             // 
@@ -239,7 +234,7 @@
             txtSearch.Location = new Point(80, 10);
             txtSearch.Name = "txtSearch";
             txtSearch.PlaceholderText = "Nhập mã vạch hoặc tên sản phẩm...";
-            txtSearch.Size = new Size(240, 23);
+            txtSearch.Size = new Size(240, 31);
             txtSearch.TabIndex = 1;
             // 
             // lblSearch
@@ -247,7 +242,7 @@
             lblSearch.AutoSize = true;
             lblSearch.Location = new Point(12, 13);
             lblSearch.Name = "lblSearch";
-            lblSearch.Size = new Size(60, 15);
+            lblSearch.Size = new Size(88, 25);
             lblSearch.TabIndex = 0;
             lblSearch.Text = "Tìm kiếm:";
             // 
@@ -256,14 +251,17 @@
             dgvProducts.AllowUserToAddRows = false;
             dgvProducts.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvProducts.BackgroundColor = Color.White;
+            dgvProducts.ColumnHeadersHeight = 34;
             dgvProducts.Dock = DockStyle.Fill;
             dgvProducts.Location = new Point(0, 160);
             dgvProducts.Name = "dgvProducts";
             dgvProducts.ReadOnly = true;
             dgvProducts.RowHeadersVisible = false;
+            dgvProducts.RowHeadersWidth = 62;
             dgvProducts.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dgvProducts.Size = new Size(964, 256);
             dgvProducts.TabIndex = 2;
+            dgvProducts.CellContentClick += dgvProducts_CellContentClick;
             // 
             // panelPaging
             // 
@@ -293,7 +291,7 @@
             lblPaging.AutoSize = true;
             lblPaging.Location = new Point(445, 13);
             lblPaging.Name = "lblPaging";
-            lblPaging.Size = new Size(60, 15);
+            lblPaging.Size = new Size(101, 25);
             lblPaging.TabIndex = 1;
             lblPaging.Text = "Trang: 1 / 1";
             // 

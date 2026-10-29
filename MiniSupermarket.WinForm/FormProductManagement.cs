@@ -19,6 +19,11 @@ namespace MiniSupermarket.WinForms
         {
             InitializeComponent();
             BackColor = Color.FromArgb(244, 245, 247);
+
+            // 🛡️ Bổ sung cấu hình giới hạn an toàn để tránh lỗi ArgumentOutOfRangeException
+            nudStock.Maximum = 1000000;
+            nudPrice.Maximum = 1000000000m;
+
             ApplyPermissions();
 
             // Sự kiện nút bấm
@@ -142,8 +147,11 @@ namespace MiniSupermarket.WinForms
             txtId.Text = p.ProductId.ToString();
             txtBarcode.Text = p.Barcode;
             txtName.Text = p.ProductName;
-            nudPrice.Value = p.Price;
-            nudStock.Value = p.StockQuantity;
+
+            // Gán giá trị an toàn sau khi đã nới Maximum ở constructor
+            nudPrice.Value = Math.Clamp(p.Price, nudPrice.Minimum, nudPrice.Maximum);
+            nudStock.Value = Math.Clamp(p.StockQuantity, (int)nudStock.Minimum, (int)nudStock.Maximum);
+
             cboCategory.SelectedValue = p.CategoryId;
         }
 
@@ -247,6 +255,11 @@ namespace MiniSupermarket.WinForms
             txtName.Clear();
             nudPrice.Value = 0;
             nudStock.Value = 0;
+        }
+
+        private void dgvProducts_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+
         }
     }
 

@@ -6,21 +6,16 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using MiniSupermarket.API.Models;
+using MiniSupermarket.API.Migrations;
 
 namespace MiniSupermarket.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class AuthController : ControllerBase
+    public class AuthController(IConfiguration configuration, Data.SupermarketDbContext context) : ControllerBase
     {
-        private readonly IConfiguration _configuration;
-        private readonly SupermarketDbContext _context;
-
-        public AuthController(IConfiguration configuration, SupermarketDbContext context)
-        {
-            _configuration = configuration;
-            _context = context;
-        }
+        private readonly IConfiguration _configuration = configuration;
+        private readonly Data.SupermarketDbContext _context = context;
 
         // Endpoint Đăng nhập: POST /api/auth/login
         [HttpPost("login")]

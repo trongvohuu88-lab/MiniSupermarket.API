@@ -29,7 +29,7 @@ namespace MiniSupermarket.API.Models
 
         // 4. Giá bán lẻ niêm yết: decimal(18,2)
         [Column(TypeName = "decimal(18,2)")]
-        [Range(0, double.MaxValue, ErrorMessage = "Giá bán phải lớn hơn hoặc bằng 0!")]
+        [Range(0.01, double.MaxValue, ErrorMessage = "Giá bán phải lớn hơn 0!")]
         public decimal Price { get; set; }
 
         // 5. Số lượng hàng hóa hiện còn trong kho

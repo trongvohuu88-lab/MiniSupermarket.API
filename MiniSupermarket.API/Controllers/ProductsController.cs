@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MiniSupermarket.API.Data;
 using MiniSupermarket.API.Models;
+using System.Linq.Expressions;
 
 namespace MiniSupermarket.API.Controllers
 {
@@ -18,6 +19,20 @@ namespace MiniSupermarket.API.Controllers
             _context = context;
         }
 
+        // Chuyển Entity -> DTO ngay trong câu truy vấn SQL (không trả Entity ra ngoài)
+        private static readonly Expression<Func<Product, ProductResponseDto>> ToResponseDto = p => new ProductResponseDto
+        {
+            ProductId = p.ProductId,
+            Barcode = p.Barcode,
+            ProductName = p.ProductName,
+            Price = p.Price,
+            StockQuantity = p.StockQuantity,
+            Unit = p.Unit,
+            IsLowStock = p.StockQuantity <= 20,
+            CategoryId = p.CategoryId,
+            CategoryName = p.Category != null ? p.Category.CategoryName : string.Empty
+        };
+
         // GET: api/Products
         [HttpGet]
         [Authorize(Roles = "Admin,Warehouse,Cashier")] // Cho phép Admin, Warehouse và Cashier xem danh sách
@@ -25,8 +40,9 @@ namespace MiniSupermarket.API.Controllers
         {
             var products = await _context.Products
                 .Include(p => p.Category)
-                .OrderByDescending(p => p.ProductId)
                 .AsNoTracking()
+                .OrderByDescending(p => p.ProductId)
+                .Select(ToResponseDto)
                 .ToListAsync();
 
             return Ok(products);
@@ -104,17 +120,7 @@ namespace MiniSupermarket.API.Controllers
                 .Include(p => p.Category)
                 .AsNoTracking()
                 .OrderBy(p => p.ProductId)
-                .Select(p => new
-                {
-                    p.ProductId,
-                    p.Barcode,
-                    p.ProductName,
-                    p.Price,
-                    p.StockQuantity,
-                    IsLowStock = p.StockQuantity <= 20,
-                    p.CategoryId,
-                    CategoryName = p.Category != null ? p.Category.CategoryName : null
-                })
+                .Select(ToResponseDto)
                 .ToListAsync();
 
             return Ok(products);
@@ -128,7 +134,9 @@ namespace MiniSupermarket.API.Controllers
             var product = await _context.Products
                 .Include(p => p.Category)
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.ProductId == id);
+                .Where(p => p.ProductId == id)
+                .Select(ToResponseDto)
+                .FirstOrDefaultAsync();
 
             if (product == null)
                 return NotFound(new { message = "Không tìm thấy sản phẩm!" });
@@ -141,7 +149,7 @@ namespace MiniSupermarket.API.Controllers
         [Authorize(Roles = "Admin,Warehouse,Cashier")] // Giúp thu ngân quét mã vạch và tìm kiếm sản phẩm khi bán hàng POS
         public async Task<IActionResult> Search([FromQuery] string? keyword, [FromQuery] int? categoryId)
         {
-            var query = _context.Products.AsQueryable();
+            var query = _context.Products.AsNoTracking().AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(keyword))
             {
@@ -156,7 +164,7 @@ namespace MiniSupermarket.API.Controllers
 
             var list = await query
                 .Include(p => p.Category)
-                .AsNoTracking()
+                .Select(ToResponseDto)
                 .ToListAsync();
 
             return Ok(list);
@@ -165,53 +173,82 @@ namespace MiniSupermarket.API.Controllers
         // POST: api/Products
         [HttpPost]
         [Authorize(Roles = "Admin,Warehouse")] // Chỉ Admin và Warehouse được thêm sản phẩm
-        public async Task<IActionResult> Create([FromBody] Product newProduct)
+        public async Task<IActionResult> Create([FromBody] ProductCreateDto dto)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
-            var existBarcode = await _context.Products.AnyAsync(p => p.Barcode == newProduct.Barcode);
+            var barcode = dto.Barcode.Trim();
+            var existBarcode = await _context.Products.AnyAsync(p => p.Barcode == barcode);
             if (existBarcode)
                 return BadRequest(new { message = "Mã vạch đã tồn tại!" });
 
-            var cat = await _context.Categories.FindAsync(newProduct.CategoryId);
+            var cat = await _context.Categories.FindAsync(dto.CategoryId);
             if (cat == null)
                 return BadRequest(new { message = "Danh mục không tồn tại!" });
 
-            _context.Products.Add(newProduct);
+            // DTO -> Entity
+            var product = new Product
+            {
+                Barcode = barcode,
+                ProductName = dto.ProductName.Trim(),
+                Price = dto.Price,
+                StockQuantity = dto.StockQuantity,
+                Unit = dto.Unit,
+                CategoryId = dto.CategoryId
+            };
+
+            _context.Products.Add(product);
             await _context.SaveChangesAsync();
 
-            await _context.Entry(newProduct).Reference(p => p.Category).LoadAsync();
+            // Entity -> DTO trả về (201 Created)
+            var response = new ProductResponseDto
+            {
+                ProductId = product.ProductId,
+                Barcode = product.Barcode,
+                ProductName = product.ProductName,
+                Price = product.Price,
+                StockQuantity = product.StockQuantity,
+                Unit = product.Unit,
+                IsLowStock = product.StockQuantity <= 20,
+                CategoryId = product.CategoryId,
+                CategoryName = cat.CategoryName
+            };
 
-            return CreatedAtAction(nameof(GetById), new { id = newProduct.ProductId }, newProduct);
+            return CreatedAtAction(nameof(GetById), new { id = product.ProductId }, response);
         }
 
         // PUT: api/Products/5
         [HttpPut("{id}")]
         [Authorize(Roles = "Admin,Warehouse")] // Chỉ Admin và Warehouse được sửa sản phẩm
-        public async Task<IActionResult> Update(int id, [FromBody] Product updateProduct)
+        public async Task<IActionResult> Update(int id, [FromBody] ProductUpdateDto dto)
         {
-            if (id != updateProduct.ProductId)
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            if (dto.ProductId.HasValue && dto.ProductId.Value != id)
                 return BadRequest(new { message = "Mã sản phẩm không khớp!" });
 
             var prod = await _context.Products.FindAsync(id);
             if (prod == null)
                 return NotFound(new { message = "Không tìm thấy sản phẩm!" });
 
+            var barcode = dto.Barcode.Trim();
             var existBarcode = await _context.Products
-                .AnyAsync(p => p.Barcode == updateProduct.Barcode && p.ProductId != id);
+                .AnyAsync(p => p.Barcode == barcode && p.ProductId != id);
             if (existBarcode)
                 return BadRequest(new { message = "Mã vạch đã tồn tại!" });
 
-            var cat = await _context.Categories.FindAsync(updateProduct.CategoryId);
+            var cat = await _context.Categories.FindAsync(dto.CategoryId);
             if (cat == null)
                 return BadRequest(new { message = "Danh mục không tồn tại!" });
 
-            prod.Barcode = updateProduct.Barcode;
-            prod.ProductName = updateProduct.ProductName;
-            prod.Price = updateProduct.Price;
-            prod.StockQuantity = updateProduct.StockQuantity;
-            prod.CategoryId = updateProduct.CategoryId;
+            prod.Barcode = barcode;
+            prod.ProductName = dto.ProductName.Trim();
+            prod.Price = dto.Price;
+            prod.StockQuantity = dto.StockQuantity;
+            prod.Unit = dto.Unit;
+            prod.CategoryId = dto.CategoryId;
 
             await _context.SaveChangesAsync();
             return NoContent();

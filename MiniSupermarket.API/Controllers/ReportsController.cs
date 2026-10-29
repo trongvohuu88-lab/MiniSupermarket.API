@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Mo ta: Controller ADO.NET thuc thi Stored Procedure xuat bao cao ca ban
  */
 using Microsoft.AspNetCore.Mvc;
@@ -25,7 +25,7 @@ namespace MiniSupermarket.API.Controllers
         // Chuc nang: Goi Stored Procedure sp_GetRevenueByCashier qua SqlDataReader
         // =========================================================================
         [HttpGet("revenue-by-cashier")]
-        public IActionResult GetRevenueByCashier()
+        public async Task<IActionResult> GetRevenueByCashier()
         {
             var reportList = new List<CashierRevenueDto>();
             string connectionString = _configuration.GetConnectionString("DefaultConnection")!;
@@ -43,13 +43,13 @@ namespace MiniSupermarket.API.Controllers
                     try
                     {
                         // 4. Mo ket noi vat ly toi SQL Server
-                        connection.Open();
+                        await connection.OpenAsync();
 
                         // 5. Thuc thi bang ExecuteReader(): Nhan ve luong du lieu forward-only
-                        using (SqlDataReader reader = command.ExecuteReader())
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
                         {
                             // 6. Vong lap doc tung dong ket qua cua Stored Procedure
-                            while (reader.Read())
+                            while (await reader.ReadAsync())
                             {
                                 // Anh xa tung cot du lieu tu reader vao doi tuong DTO
                                 var item = new CashierRevenueDto

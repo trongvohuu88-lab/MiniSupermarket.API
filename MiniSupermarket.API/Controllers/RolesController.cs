@@ -1,5 +1,7 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using MiniSupermarket.API.Data;
 using MiniSupermarket.API.Models;
 
 namespace MiniSupermarket.API.Controllers
@@ -9,24 +11,26 @@ namespace MiniSupermarket.API.Controllers
     [Authorize(Roles = "Admin")] // Toàn bộ các API vai trò chỉ dành riêng cho Admin
     public class RolesController : ControllerBase
     {
-        private static readonly List<Role> _roles = new() {
-            new Role { Id = 1, RoleName = "Admin", Description = "Quản trị viên toàn hệ thống, toàn quyền thao tác" },
-            new Role { Id = 2, RoleName = "Cashier", Description = "Nhân viên thu ngân, chuyên trách bán hàng tại quầy POS" },
-            new Role { Id = 3, RoleName = "Warehouse", Description = "Nhân viên quản lý kho, nhập hàng và kiểm kê" }
-        };
+        private readonly SupermarketDbContext _context;
 
-        // 1. READ: Lấy danh sách vai trò
-        [HttpGet]
-        public IActionResult GetAll()
+        public RolesController(SupermarketDbContext context)
         {
-            return Ok(_roles);
+            _context = context;
+        }
+
+        // 1. READ: Lấy danh sách vai trò từ bảng Roles trong CSDL
+        [HttpGet]
+        public async Task<IActionResult> GetAll()
+        {
+            var roles = await _context.Roles.AsNoTracking().OrderBy(r => r.Id).ToListAsync();
+            return Ok(roles);
         }
 
         // 2. READ: Lấy chi tiết vai trò
         [HttpGet("{id}")]
-        public IActionResult GetById(int id)
+        public async Task<IActionResult> GetById(int id)
         {
-            var role = _roles.FirstOrDefault(r => r.Id == id);
+            var role = await _context.Roles.AsNoTracking().FirstOrDefaultAsync(r => r.Id == id);
             if (role == null)
             {
                 return NotFound(new { message = "Không tìm thấy vai trò!" });
@@ -36,45 +40,66 @@ namespace MiniSupermarket.API.Controllers
 
         // 3. CREATE: Thêm vai trò mới
         [HttpPost]
-        public IActionResult Create([FromBody] Role newRole)
+        public async Task<IActionResult> Create([FromBody] RoleRequestDto dto)
         {
-            if (string.IsNullOrWhiteSpace(newRole.RoleName))
+            if (!ModelState.IsValid)
             {
-                return BadRequest(new { message = "Tên vai trò không được để trống!" });
+                return BadRequest(ModelState);
             }
-            newRole.Id = _roles.Count > 0 ? _roles.Max(r => r.Id) + 1 : 1;
-            _roles.Add(newRole);
+
+            var name = dto.RoleName.Trim();
+            if (await _context.Roles.AnyAsync(r => r.RoleName == name))
+            {
+                return BadRequest(new { message = "Tên vai trò đã tồn tại!" });
+            }
+
+            var newRole = new Role { RoleName = name, Description = dto.Description };
+            _context.Roles.Add(newRole);
+            await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetById), new { id = newRole.Id }, newRole);
         }
 
         // 4. UPDATE: Cập nhật vai trò
         [HttpPut("{id}")]
-        public IActionResult Update(int id, [FromBody] Role updateRole)
+        public async Task<IActionResult> Update(int id, [FromBody] RoleRequestDto dto)
         {
-            var role = _roles.FirstOrDefault(r => r.Id == id);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var role = await _context.Roles.FindAsync(id);
             if (role == null)
             {
                 return NotFound(new { message = "Không tìm thấy vai trò cần sửa!" });
             }
 
-            role.RoleName = updateRole.RoleName;
-            role.Description = updateRole.Description;
+            var name = dto.RoleName.Trim();
+            if (await _context.Roles.AnyAsync(r => r.RoleName == name && r.Id != id))
+            {
+                return BadRequest(new { message = "Tên vai trò đã tồn tại!" });
+            }
 
+            role.RoleName = name;
+            role.Description = dto.Description;
+
+            await _context.SaveChangesAsync();
             return NoContent();
         }
 
         // 5. DELETE: Xóa vai trò
         [HttpDelete("{id}")]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var role = _roles.FirstOrDefault(r => r.Id == id);
+            var role = await _context.Roles.FindAsync(id);
             if (role == null)
             {
                 return NotFound(new { message = "Không tìm thấy vai trò cần xóa!" });
             }
 
-            _roles.Remove(role);
+            _context.Roles.Remove(role);
+            await _context.SaveChangesAsync();
             return NoContent();
         }
     }

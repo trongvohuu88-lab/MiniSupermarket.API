@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Mo ta: Controller ADO.NET thuan - Tra cuu ma vach sieu toc va demo DataTable
  */
 using Microsoft.AspNetCore.Mvc;
@@ -34,7 +34,7 @@ namespace MiniSupermarket.API.Controllers
         // =========================================================================
         // GET: api/ado-products/barcode/893456789001
         [HttpGet("barcode/{barcode}")]
-        public IActionResult GetProductByBarcode(string barcode)
+        public async Task<IActionResult> GetProductByBarcode(string barcode)
         {
             // 1. Kiem tra tinh hop le cua tham so dau vao
             if (string.IsNullOrWhiteSpace(barcode))
@@ -61,13 +61,13 @@ namespace MiniSupermarket.API.Controllers
                     try
                     {
                         // 6. Mo ket noi vat ly toi SQL Server
-                        connection.Open();
+                        await connection.OpenAsync();
 
                         // 7. Khoi tao luong doc nhanh Forward-Only SqlDataReader
-                        using (SqlDataReader reader = command.ExecuteReader())
+                        using (SqlDataReader reader = await command.ExecuteReaderAsync())
                         {
                             // 8. Doc ban ghi: reader.Read() tra ve true neu tim thay dong du lieu
-                            if (reader.Read())
+                            if (await reader.ReadAsync())
                             {
                                 var productDto = new ProductLookupDto
                                 {
@@ -100,7 +100,7 @@ namespace MiniSupermarket.API.Controllers
         // =========================================================================
         // GET: api/ado-products/disconnected-cache
         [HttpGet("disconnected-cache")]
-        public IActionResult GetProductsDisconnected()
+        public async Task<IActionResult> GetProductsDisconnected()
         {
             string connectionString = _configuration.GetConnectionString("DefaultConnection")!;
 
@@ -120,7 +120,7 @@ namespace MiniSupermarket.API.Controllers
                     using (SqlDataAdapter adapter = new SqlDataAdapter(command))
                     {
                         // 4. Phuong thuc Fill(): Tu dong Open connection -> Doc du lieu do vao DataTable -> Tu dong Close connection
-                        adapter.Fill(productTable);
+                        await Task.Run(() => adapter.Fill(productTable));
                     }
                 }
             } // Tai day, ket noi CSDL DA DUOC DONG HOAN TOAN!

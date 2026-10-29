@@ -13,7 +13,7 @@ namespace MiniSupermarket.WinForms.Services
         public static readonly HttpClient Client = new HttpClient
         {
             // Đảm bảo số cổng Port trùng khớp với số Port đang chạy của Web API Backend
-            BaseAddress = new Uri("https://localhost:7123/api/")
+            BaseAddress = new Uri("https://localhost:7292/api/")
         };
 
         // Phương thức cập nhật Bearer Token sau khi đăng nhập thành công
