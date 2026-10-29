@@ -164,7 +164,7 @@ Sau khi thao tác trên WinForms, kiểm tra dữ liệu trong SQL Server bằng
 
 ## 👨‍💻 6. Tác giả
 
-- **Họ tên sinh viên:** Nguyễn Quốc Vương
-- **Mã sinh viên:** 2124110272
+- **Họ tên sinh viên:** Võ Hữu Trọng
+- **Mã sinh viên:** 2124110250
 - **Lớp học phần:** CCQ2411D
 
