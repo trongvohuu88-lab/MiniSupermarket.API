@@ -53,6 +53,7 @@ namespace MiniSupermarket.API.Controllers
         [Authorize(Roles = "Admin,Warehouse,Cashier")]
         public async Task<IActionResult> GetPagedProducts(
             [FromQuery] string? keyword,
+            [FromQuery] int? categoryId,
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 5)
         {
@@ -70,16 +71,19 @@ namespace MiniSupermarket.API.Controllers
             // 3. Lọc theo từ khóa tìm kiếm (nếu người dùng có nhập)
             if (!string.IsNullOrWhiteSpace(keyword))
             {
-                string search = keyword.Trim().ToLower();
-                query = query.Where(p => p.ProductName.ToLower().Contains(search)
+                string search = keyword.Trim();
+                query = query.Where(p => p.ProductName.Contains(search)
                                         || p.Barcode.Contains(search));
             }
 
-            // 4. Đếm tổng số lượng bản ghi thỏa mãn điều kiện
-            int totalItems = await query.CountAsync();
+            if (categoryId is > 0)
+            {
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+            }
 
-            // 5. Tính toán tổng số trang
+            int totalItems = await query.CountAsync();
             int totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+            pageNumber = totalPages == 0 ? 1 : Math.Min(pageNumber, totalPages);
 
             // 6. Áp dụng toán tử Skip và Take để phân trang trực tiếp dưới SQL Server
             var items = await query

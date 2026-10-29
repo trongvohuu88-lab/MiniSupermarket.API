@@ -30,6 +30,47 @@ namespace MiniSupermarket.API.Controllers
             return Ok(customers);
         }
 
+        // GET /api/customers/paged?pageNumber=1&pageSize=5
+        [HttpGet("paged")]
+        public async Task<ActionResult<PagedResult<CustomerItemDto>>> GetPagedCustomers(
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 5)
+        {
+            if (pageNumber < 1) pageNumber = 1;
+            if (pageSize < 1 || pageSize > 50) pageSize = 5;
+
+            var query = _context.Customers
+                .AsNoTracking()
+                .OrderByDescending(c => c.RewardPoints)
+                .ThenBy(c => c.CustomerId);
+
+            var totalItems = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling((double)totalItems / pageSize);
+            pageNumber = totalPages == 0 ? 1 : Math.Min(pageNumber, totalPages);
+
+            var items = await query
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .Select(c => new CustomerItemDto
+                {
+                    CustomerId = c.CustomerId,
+                    CustomerName = c.CustomerName,
+                    PhoneNumber = c.PhoneNumber,
+                    RewardPoints = c.RewardPoints,
+                    MembershipRank = c.MembershipRank
+                })
+                .ToListAsync();
+
+            return Ok(new PagedResult<CustomerItemDto>
+            {
+                CurrentPage = pageNumber,
+                PageSize = pageSize,
+                TotalItems = totalItems,
+                TotalPages = totalPages,
+                Items = items
+            });
+        }
+
         // 2. GET /api/customers/{id} - Lấy chi tiết khách hàng (Admin & Cashier)
         [HttpGet("{id:int}")]
         public async Task<ActionResult<Customer>> GetCustomer(int id)

@@ -17,6 +17,15 @@ namespace MiniSupermarket.API.Models
         public string CategoryName { get; set; } = string.Empty; // Lấy từ bảng Categories qua Eager Loading
     }
 
+    public class CustomerItemDto
+    {
+        public int CustomerId { get; set; }
+        public string CustomerName { get; set; } = string.Empty;
+        public string PhoneNumber { get; set; } = string.Empty;
+        public int RewardPoints { get; set; }
+        public string MembershipRank { get; set; } = string.Empty;
+    }
+
     // DTO bao bọc kết quả phân trang
     public class PagedResult<T>
     {

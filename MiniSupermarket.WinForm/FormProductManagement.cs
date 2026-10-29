@@ -29,6 +29,14 @@ namespace MiniSupermarket.WinForms
             // Sự kiện nút bấm
             btnSearch.Click += async (_, _) => { _currentPage = 1; await LoadPagedProductsAsync(); };
             txtSearch.KeyDown += async (_, e) => { if (e.KeyCode == Keys.Enter) { _currentPage = 1; await LoadPagedProductsAsync(); } };
+            cboCategoryFilter.SelectedIndexChanged += async (_, _) =>
+            {
+                if (_isInitialized)
+                {
+                    _currentPage = 1;
+                    await LoadPagedProductsAsync();
+                }
+            };
 
             btnCreate.Click += async (_, _) => await SaveAsync(isNew: true);
             btnUpdate.Click += async (_, _) => await SaveAsync(isNew: false);
@@ -89,6 +97,15 @@ namespace MiniSupermarket.WinForms
                 cboCategory.DataSource = cats;
                 cboCategory.DisplayMember = "CategoryName";
                 cboCategory.ValueMember = "CategoryId";
+
+                var filterCategories = new List<CategoryDto>
+                {
+                    new() { CategoryId = 0, CategoryName = "Tất cả nhóm hàng" }
+                };
+                filterCategories.AddRange(cats);
+                cboCategoryFilter.DataSource = filterCategories;
+                cboCategoryFilter.DisplayMember = "CategoryName";
+                cboCategoryFilter.ValueMember = "CategoryId";
             }
             catch (Exception ex)
             {
@@ -103,7 +120,10 @@ namespace MiniSupermarket.WinForms
                 if (ApiClientService.Client == null) return;
 
                 string keyword = Uri.EscapeDataString(txtSearch.Text.Trim());
-                string url = $"products/paged?keyword={keyword}&pageNumber={_currentPage}&pageSize={_pageSize}";
+                int categoryId = cboCategoryFilter.SelectedValue is int selectedCategoryId
+                    ? selectedCategoryId
+                    : 0;
+                string url = $"products/paged?keyword={keyword}&categoryId={categoryId}&pageNumber={_currentPage}&pageSize={_pageSize}";
 
                 var result = await ApiClientService.Client.GetFromJsonAsync<PagedResult<ProductItemDto>>(url);
                 if (result != null)

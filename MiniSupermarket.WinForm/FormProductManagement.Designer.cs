@@ -34,6 +34,8 @@
             txtId = new TextBox();
             lblId = new Label();
             panelSearch = new Panel();
+            cboCategoryFilter = new ComboBox();
+            lblCategoryFilter = new Label();
             btnSearch = new Button();
             txtSearch = new TextBox();
             lblSearch = new Label();
@@ -49,9 +51,9 @@
             ((System.ComponentModel.ISupportInitialize)dgvProducts).BeginInit();
             panelPaging.SuspendLayout();
             SuspendLayout();
-            // 
+            //
             // panelInputs
-            // 
+            //
             panelInputs.BorderStyle = BorderStyle.FixedSingle;
             panelInputs.Controls.Add(btnDelete);
             panelInputs.Controls.Add(btnUpdate);
@@ -73,9 +75,9 @@
             panelInputs.Name = "panelInputs";
             panelInputs.Size = new Size(964, 115);
             panelInputs.TabIndex = 0;
-            // 
+            //
             // btnDelete
-            // 
+            //
             btnDelete.BackColor = Color.Firebrick;
             btnDelete.ForeColor = Color.White;
             btnDelete.Location = new Point(560, 75);
@@ -211,14 +213,34 @@
             // panelSearch
             // 
             panelSearch.BorderStyle = BorderStyle.FixedSingle;
+            panelSearch.Controls.Add(cboCategoryFilter);
+            panelSearch.Controls.Add(lblCategoryFilter);
             panelSearch.Controls.Add(btnSearch);
             panelSearch.Controls.Add(txtSearch);
             panelSearch.Controls.Add(lblSearch);
             panelSearch.Dock = DockStyle.Top;
             panelSearch.Location = new Point(0, 115);
             panelSearch.Name = "panelSearch";
-            panelSearch.Size = new Size(964, 45);
+            panelSearch.Size = new Size(964, 50);
             panelSearch.TabIndex = 1;
+            //
+            // cboCategoryFilter
+            //
+            cboCategoryFilter.DropDownStyle = ComboBoxStyle.DropDownList;
+            cboCategoryFilter.FormattingEnabled = true;
+            cboCategoryFilter.Location = new Point(500, 8);
+            cboCategoryFilter.Name = "cboCategoryFilter";
+            cboCategoryFilter.Size = new Size(260, 33);
+            cboCategoryFilter.TabIndex = 4;
+            //
+            // lblCategoryFilter
+            //
+            lblCategoryFilter.AutoSize = true;
+            lblCategoryFilter.Location = new Point(420, 11);
+            lblCategoryFilter.Name = "lblCategoryFilter";
+            lblCategoryFilter.Size = new Size(72, 25);
+            lblCategoryFilter.TabIndex = 3;
+            lblCategoryFilter.Text = "Nhóm:";
             // 
             // btnSearch
             // 
@@ -349,6 +371,8 @@
         private Label lblSearch;
         private TextBox txtSearch;
         private Button btnSearch;
+        private Label lblCategoryFilter;
+        private ComboBox cboCategoryFilter;
 
         private DataGridView dgvProducts;
 
